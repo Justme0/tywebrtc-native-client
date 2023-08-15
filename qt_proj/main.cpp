@@ -27,6 +27,26 @@ void network()
     }
 }
 
+void udpSend() {
+    QUdpSocket *udpSocket = new QUdpSocket();
+
+    bool result =  udpSocket->bind(QHostAddress::AnyIPv4, 21939);
+    if(result)
+    {
+        qDebug() << "Socket PASS";
+    }
+    else
+    {
+        qDebug() << "Socket FAIL";
+    }
+
+    // Send it out to some IP (192.168.1.1) and port (45354).
+    qint64 bytesSent = udpSocket->writeDatagram(QByteArray("Hello Qt!"),
+                                            QHostAddress("36.155.205.204"),
+                                            8090);
+    qDebug() << "send size is " << bytesSent;
+}
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -37,7 +57,8 @@ int main(int argc, char *argv[])
     QVideoWidget * vw = new QVideoWidget;
     player->setVideoOutput(vw);
     //player->setSource(QUrl::fromLocalFile("C:\\Users\\jiang\\Downloads\\big.mp4"));
-     player->setSource(QUrl::fromLocalFile("/Users/taylorjiang/big.mp4"));
+     // player->setSource(QUrl::fromLocalFile("/Users/taylorjiang/big.mp4"));
+     player->setSource(QUrl::fromLocalFile("C:\\Users\\jiang\\Downloads\\big.mp4"));
 
     QAudioOutput* audioOutput = new QAudioOutput;
     player->setAudioOutput(audioOutput);
@@ -49,6 +70,8 @@ int main(int argc, char *argv[])
     qDebug() << "hello=" <<  player->playbackState();
 
     network();
+
+    udpSend();
 
     return a.exec();
 }
