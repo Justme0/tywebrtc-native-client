@@ -1,24 +1,39 @@
-QT       += core gui
+#-------------------------------------------------
+#
+# Project created by QtCreator
+#
+#-------------------------------------------------
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia multimediawidgets network
+QT       += core gui core5compat network
 
-CONFIG += c++17
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+# TARGET = rtspPlayer
+TEMPLATE = app
 
-SOURCES += \
-    main.cpp \
-    hello.cpp
 
-HEADERS += \
-    hello.h
+SOURCES += main.cpp \
+    videoplayer.cpp \
+    mainwindow.cpp
 
-FORMS += \
-    hello.ui
+HEADERS  += \
+    videoplayer.h \
+    mainwindow.h
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
+FORMS    += \
+    mainwindow.ui
+
+macx {
+} win32 {
+
+INCLUDEPATH+=$$PWD/third_party/ffmpeg/include
+
+LIBS += $$PWD/third_party/ffmpeg/lib/avcodec.lib \
+        $$PWD/third_party/ffmpeg/lib/avdevice.lib \
+        $$PWD/third_party/ffmpeg/lib/avfilter.lib \
+        $$PWD/third_party/ffmpeg/lib/avformat.lib \
+        $$PWD/third_party/ffmpeg/lib/avutil.lib \
+        $$PWD/third_party/ffmpeg/lib/postproc.lib \
+        $$PWD/third_party/ffmpeg/lib/swresample.lib \
+        $$PWD/third_party/ffmpeg/lib/swscale.lib
+}
