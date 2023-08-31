@@ -31,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //m_strUrl = "rtsp://192.168.5.100:8554/vlc";
     //m_strUrl = "rtsp://192.168.5.154:8554/test.h264";
     // m_strUrl = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4";
-    m_strUrl = "rtsp://zephyr.rtsp.stream/pattern?streamKey=e8494adad8b2628690c507eee8419c1c";
     // m_strUrl = "rtsp://zephyr.rtsp.stream/movie?streamKey=324260c63242294fdd6df91587d87e50";
+    m_strUrl = "rtmp://rtmp.rtc.qq.com/pull/295036?sdkappid=1400188366&userid=taylorobs&usersig=eJw8jl8LgjAUR7-LfQ67m23ZoJegJJRAVlK9Wa649kfTUYvou0cmvf4OnN95wTLWnnEV1QYUE0JwROy1K*XmaulApgYFNnuey7rcNfCDTX7KqopyUGyAyILAl7IjdAQFDxnzIhGb8uaKhZumYaqDbWKiSbR3a4t9zfksDJmv56txp7R0*TbIEWdD9tfd23vuIbw-AQAA---IVDJ0&use_number_room_id=1&remoteuserid=taylorobs";
     ui->lineEditUrl->setText(m_strUrl);
 }
 

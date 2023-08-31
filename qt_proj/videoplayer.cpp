@@ -124,15 +124,17 @@ void VideoPlayer::run()
     pFormatCtx = avformat_alloc_context();
 
     //AVDictionary
+    /*
     AVDictionary *avdic=nullptr;
-    char option_key[]="rtsp_transport";
-    char option_value[]="udp";
+    char option_key[]="rtmp_transport";
+    char option_value[]="tcp";
     av_dict_set(&avdic,option_key,option_value,0);
     char option_key2[]="max_delay";
-    char option_value2[]="100";
+    char option_value2[]="1000";
     av_dict_set(&avdic,option_key2,option_value2,0);
+*/
 
-    if (avformat_open_input(&pFormatCtx, m_strFileName.toLocal8Bit().data(), nullptr, &avdic) != 0)
+    if (avformat_open_input(&pFormatCtx, m_strFileName.toLocal8Bit().data(), nullptr, nullptr) != 0)
     {
         printf("can't open the file. \n");
         return;

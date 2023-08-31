@@ -52,7 +52,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>rtsp:</string>
+     <string>url:</string>
     </property>
    </widget>
    <widget class="QLabel" name="labelCenter">
@@ -70,7 +70,7 @@
      </font>
     </property>
     <property name="text">
-     <string>确认rtsp地址后启动视频播放</string>
+     <string>确认地址后启动视频播放</string>
     </property>
    </widget>
    <widget class="QWidget" name="layoutWidget">
