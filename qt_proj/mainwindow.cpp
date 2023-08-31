@@ -7,6 +7,12 @@
 #include <QtMath>
 #include <QTime>
 #include<iostream>
+
+extern "C"
+{
+    #include "libavcodec/avcodec.h"
+}
+
 #pragma execution_character_set("utf-8")
 
 using namespace std;

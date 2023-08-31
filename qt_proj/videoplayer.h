@@ -4,13 +4,6 @@
 #include <QThread>
 #include <QImage>
 
-extern "C"
-{
-    #include "libavcodec/avcodec.h"
-    #include "libavformat/avformat.h"
-    #include "libavutil/pixfmt.h"
-    #include "libswscale/swscale.h"
-}
 
 class VideoPlayer : public QThread
 {

@@ -5,6 +5,14 @@
 
 #include <QtNetwork>
 
+extern "C"
+{
+    #include "libavcodec/avcodec.h"
+    #include "libavformat/avformat.h"
+    #include "libavutil/pixfmt.h"
+    #include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
+}
 
 using namespace std;
 
@@ -103,7 +111,7 @@ void VideoPlayer::run()
 {
     AVFormatContext *pFormatCtx; //音视频封装格式上下文结构体
     AVCodecContext  *pCodecCtx;  //音视频编码器上下文结构体
-    AVCodec *pCodec; //音视频编码器结构体
+    const AVCodec *pCodec; //音视频编码器结构体
     AVFrame *pFrame; //存储一帧解码后像素数据
     AVFrame *pFrameRGB;
     AVPacket *pPacket; //存储一帧压缩编码数据
@@ -141,7 +149,7 @@ void VideoPlayer::run()
     qDebug("apFormatCtx->nb_streams:%d", pFormatCtx->nb_streams);
     for (unsigned int i = 0; i < pFormatCtx->nb_streams; i++)
     {
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
         {
             videoStreamIdx = i; //视频流
         }
@@ -152,9 +160,14 @@ void VideoPlayer::run()
         return;
     }
 
+    // old and new API diff: https://www.cnblogs.com/schips/p/12197116.html
     //查找解码器
     qDebug("avcodec_find_decoder...");
-    pCodecCtx = pFormatCtx->streams[videoStreamIdx]->codec;
+
+    pCodecCtx = avcodec_alloc_context3(NULL);
+
+    avcodec_parameters_to_context(pCodecCtx,pFormatCtx->streams[videoStreamIdx]->codecpar);
+
     pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
     if (pCodec == nullptr)
     {
@@ -178,12 +191,12 @@ void VideoPlayer::run()
                                      pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
                                      AV_PIX_FMT_RGB32, SWS_BICUBIC, nullptr, nullptr, nullptr);
 
-    int numBytes = avpicture_get_size(AV_PIX_FMT_RGB32, pCodecCtx->width,pCodecCtx->height);
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB32, pCodecCtx->width,pCodecCtx->height, 1);
 
     pFrame     = av_frame_alloc();
     pFrameRGB  = av_frame_alloc();
     pOutBuffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-    avpicture_fill((AVPicture *) pFrameRGB, pOutBuffer, AV_PIX_FMT_RGB32, pCodecCtx->width, pCodecCtx->height);
+    av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, pOutBuffer, AV_PIX_FMT_RGB32, pCodecCtx->width, pCodecCtx->height, 1);
 
     pPacket = (AVPacket *) malloc(sizeof(AVPacket)); //分配一个packet
     int y_size = pCodecCtx->width * pCodecCtx->height;
@@ -199,12 +212,14 @@ void VideoPlayer::run()
         if (pPacket->stream_index == videoStreamIdx)
         {
             int got_picture;
-            int ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture,pPacket);
-            if (ret < 0)
+            //int ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture,pPacket);
+            int ret = avcodec_send_packet(pCodecCtx, pPacket);
+            if (ret )
             {
                 printf("decode error.\n");
                 return;
             }
+            got_picture = 0 == avcodec_receive_frame(pCodecCtx, pFrame); //got_picture = 0 success, a frame was returned
 
             if (got_picture)
             {
@@ -217,7 +232,7 @@ void VideoPlayer::run()
                 emit sig_GetOneFrame(image);  //发送信号
             }
         }
-        av_free_packet(pPacket);
+        av_packet_unref(pPacket);
         //msleep(0.02);
     }
 

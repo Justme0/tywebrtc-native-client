@@ -24,8 +24,18 @@ FORMS    += \
     mainwindow.ui
 
 macx {
-} win32 {
+INCLUDEPATH += /opt/homebrew/Cellar/ffmpeg/6.0/include
 
+LIBS += -L /opt/homebrew/Cellar/ffmpeg/6.0/lib \
+        -lavcodec \
+        -lavdevice \
+        -lavfilter \
+        -lavformat \
+        -lavutil \
+        -lpostproc \
+        -lswscale \
+        -lswresample
+} win32 {
 INCLUDEPATH+=$$PWD/third_party/ffmpeg/include
 
 LIBS += $$PWD/third_party/ffmpeg/lib/avcodec.lib \
