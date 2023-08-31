@@ -12,16 +12,22 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    videoplayer.cpp \
-    mainwindow.cpp
+SOURCES += \
+    *.cpp \
+    *.cc \
+    pc/*.cc \
+    rtp/pack_unpack/*.cc \
+    rtp/*.cc
 
 HEADERS  += \
-    videoplayer.h \
-    mainwindow.h
+    *.h \
+    pc/*.h \
+    rtp/pack_unpack/*.h \
+    rtp/*.h
 
 FORMS    += \
     mainwindow.ui
+
 
 macx {
 INCLUDEPATH += /opt/homebrew/Cellar/ffmpeg/6.0/include
