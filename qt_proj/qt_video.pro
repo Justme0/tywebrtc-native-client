@@ -14,14 +14,15 @@ TEMPLATE = app
 
 SOURCES += \
     *.cpp \
-    *.cc \
-    pc/*.cc \
-    rtp/pack_unpack/*.cc \
-    rtp/*.cc
+    pc/peer_connection.cc \
+    codec/video_codec.cc \
+    rtp/rtp_handler.cc \
+    rtp/pack_unpack/rtp_to_vp8.cc
 
 HEADERS  += \
     *.h \
     pc/*.h \
+    codec/*.h \
     rtp/pack_unpack/*.h \
     rtp/*.h
 
