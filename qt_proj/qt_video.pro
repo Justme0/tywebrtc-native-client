@@ -17,12 +17,14 @@ SOURCES += \
     pc/peer_connection.cc \
     codec/video_codec.cc \
     rtp/rtp_handler.cc \
+    rtp/pack_unpack/audio_to_rtp.cc \
     rtp/pack_unpack/rtp_to_vp8.cc
 
 HEADERS  += \
     *.h \
     pc/*.h \
     codec/*.h \
+    log/*.h \
     rtp/pack_unpack/*.h \
     rtp/*.h
 
@@ -31,7 +33,8 @@ FORMS    += \
 
 
 macx {
-INCLUDEPATH += /opt/homebrew/Cellar/ffmpeg/6.0/include
+INCLUDEPATH += /opt/homebrew/Cellar/ffmpeg/6.0/include \
+        $$PWD/third_party/tylib
 
 LIBS += -L /opt/homebrew/Cellar/ffmpeg/6.0/lib \
         -lavcodec \
@@ -43,7 +46,8 @@ LIBS += -L /opt/homebrew/Cellar/ffmpeg/6.0/lib \
         -lswscale \
         -lswresample
 } win32 {
-INCLUDEPATH+=$$PWD/third_party/ffmpeg/include
+INCLUDEPATH+=$$PWD/third_party/ffmpeg/include \
+        $$PWD/third_party/tylib
 
 LIBS += $$PWD/third_party/ffmpeg/lib/avcodec.lib \
         $$PWD/third_party/ffmpeg/lib/avdevice.lib \

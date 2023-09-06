@@ -8,16 +8,11 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
-#include "codec/audio_codec.h"
-#include "push/push_handler.h"
-#include "rtmp/rtmp_handler.h"
-#include "rtmp/rtmp_pull.h"
+// #include "codec/audio_codec.h"
 #include "rtp/pack_unpack/audio_to_rtp.h"
-#include "rtp/pack_unpack/h264_to_rtp.h"
-#include "rtp/pack_unpack/rtp_to_h264.h"
 #include "rtp/pack_unpack/rtp_to_vp8.h"
-#include "transport/receiver/receiver.h"
-#include "transport/sender/sender.h"
+// #include "transport/receiver/receiver.h"
+// #include "transport/sender/sender.h"
 
 // don't include whole head file avoid recycle reference
 class PeerConnection;

@@ -3,7 +3,6 @@
 #ifndef RTP_RTP_PARSER_H_
 #define RTP_RTP_PARSER_H_
 
-#include <netinet/in.h>
 
 #include <limits>
 #include <memory>
@@ -14,9 +13,9 @@
 #include "tylib/string/format_string.h"
 #include "tylib/time/time_util.h"
 
-#include "global_tmp/global_tmp.h"
+// #include "global_tmp/global_tmp.h"
 #include "log/log.h"
-#include "rtp/rtcp/rtcp_parser.h"
+// #include "rtp/rtcp/rtcp_parser.h"
 
 // define cycle as int64_t (use 47 bit at most, most significant bit for sign
 // if need), first value is 0. e.g. 8Mbps, each video packet is 1000 Byte, so
@@ -524,6 +523,7 @@ static inline void rtp_write_uint32(uint8_t* ptr, uint32_t val) {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                        header extension                       |
 // |                             ....                              |
+#include "winsock.h"
 class RtpFixedHeaderExt {
  public:
   RtpFixedHeaderExt() : extensionpayload(0), extensionlength(0) {}

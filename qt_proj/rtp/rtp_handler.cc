@@ -1,18 +1,18 @@
 #include "rtp/rtp_handler.h"
 
-#include <arpa/inet.h>
+// #include <arpa/inet.h>
 
 #include <cassert>
 #include <cstring>
 #include <string>
 
-#include "global_tmp/global_tmp.h"
+// #include "global_tmp/global_tmp.h"
 #include "log/log.h"
 #include "pc/peer_connection.h"
-#include "rtp/pack_unpack/rtp_to_h264.h"
-#include "rtp/rtcp/rtcp_parser.h"
+// #include "rtp/pack_unpack/rtp_to_h264.h"
+// #include "rtp/rtcp/rtcp_parser.h"
 #include "rtp/rtp_parser.h"
-#include "timer/timer.h"
+// #include "timer/timer.h"
 #include "tylib/ip/ip.h"
 #include "tylib/string/any_to_string.h"
 
@@ -433,91 +433,8 @@ int RtpHandler::SendToPeer_(RtpBizPacket &rtpBizPacket) {
 }
 
 int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
-  g_recvPacketNum->Add({{"dummy", "recv"}}).Increment();
 
   int ret = 0;
-
-  // if we recv web's data, dtls should complete in Chrome
-  // OPT: no need call hand shake complete function each time recv rtp
-  const bool kSessionCompleted = true;
-  ret = belongingPeerConnection_.dtlsHandler_.HandshakeCompleted(
-      kSessionCompleted);
-  if (ret) {
-    tylog(
-        "already recv rtp, we can handshakeCompleted safely, but ret=%d, but "
-        "not return error",
-        ret);
-  }
-
-  if (belongingPeerConnection_.stateMachine_ < EnumStateMachine::DTLS_DONE) {
-    tylog("warning: recv rtp, but now state=%s, should be DTLS_DONE!!!",
-          StateMachineToString(belongingPeerConnection_.stateMachine_).data());
-    return -1;
-  } else if (belongingPeerConnection_.stateMachine_ ==
-             EnumStateMachine::DTLS_DONE) {
-    // notify others I entered
-    belongingPeerConnection_.stateMachine_ = EnumStateMachine::GOT_RTP;
-    tylog("stateMachine=%s, handShakeCompleted",
-          StateMachineToString(belongingPeerConnection_.stateMachine_).data());
-
-    auto peerPC = belongingPeerConnection_.FindPeerPC();
-    if (nullptr != peerPC) {
-      peerPC->dataChannelHandler_.SendSctpDataForLable("I'm coming.");
-    }
-
-    // init push handler
-    const char *url = std::getenv("TY_PUSH_URL");
-    if (nullptr != url) {
-      tylog("push url=%s", url);
-
-      RtmpHandler &rtmpPusher =
-          *new RtmpHandler(this->belongingPeerConnection_);  // FIXME
-
-      ret = this->belongingPeerConnection_.pushHandler_.InitPushHandler(
-          std::bind(&RtmpHandler::InitProtocolHandler, &rtmpPusher, url),
-          std::bind(&RtmpHandler::InitSucc, &rtmpPusher),
-          std::bind(&RtmpHandler::SendAudioFrame, &rtmpPusher,
-                    std::placeholders::_1, std::placeholders::_2),
-          std::bind(&RtmpHandler::SendVideoFrame, &rtmpPusher,
-                    std::placeholders::_1, std::placeholders::_2));
-      if (ret) {
-        tylog("Handler.handshakeTo ret=%d.", ret);
-
-        // return ret;
-      }
-    } else {
-      tylog("push url env var not exist");
-    }
-
-    // if pull fail, retry?
-    // but current branch is run only once
-    url = std::getenv("TY_PULL_URL");
-    if (nullptr != url) {
-      tylog("pull url=%s", url);
-
-      RtmpPuller &rtmpPuller =
-          *new RtmpPuller(this->belongingPeerConnection_);  // FIXME
-
-      ret = this->belongingPeerConnection_.pullHandler_.InitPullHandler(
-          &rtmpPuller.rtmp_.m_sb.sb_socket,
-          std::bind(&RtmpPuller::InitProtocolHandler, &rtmpPuller, url),
-          std::bind(&RtmpPuller::HandlePacket, &rtmpPuller),
-          std::bind(&RtmpPuller::CloseStream, &rtmpPuller));
-      if (ret) {
-        tylog("Handler.handshakeTo ret=%d.", ret);
-
-        // return ret;
-      }
-    } else {
-      tylog("pull url env var not exist");
-    }
-
-    // 收到RTP后定时请求I帧
-    TimerManager::Instance()->AddTimer(
-        &this->belongingPeerConnection_.pliTimer_);
-  }
-
-  assert(belongingPeerConnection_.stateMachine_ == EnumStateMachine::GOT_RTP);
 
   std::string mediaType =
       reinterpret_cast<const RtpHeader *>(vBufReceive.data())->GetMediaType();

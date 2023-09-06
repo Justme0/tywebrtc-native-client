@@ -1,21 +1,12 @@
 #ifndef PC_PEER_CONNECTION_H_
 #define PC_PEER_CONNECTION_H_
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-
 #include <cstdint>
 #include <cstring>
 
 // #include "data_channel/data_channel_handler.h"
-#include "dtls/dtls_handler.h"
-#include "ice/ice_handler.h"
 #include "log/log.h"
-#include "rtp/rtcp/rtcp_handler.h"
 #include "rtp/rtp_handler.h"
-#include "rtp/srtp/srtp_handler.h"
-#include "sdp/sdp_handler.h"
-#include "timer/timer.h"
 
 enum class PacketType {
   STUN,
