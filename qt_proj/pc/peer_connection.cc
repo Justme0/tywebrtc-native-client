@@ -9,27 +9,29 @@ PeerConnection::PeerConnection(const std::string &ip, int port)
     : stateMachine_(EnumStateMachine::GOT_CANDIDATE),  // sdp has candiate
       clientIP_(ip),
       clientPort_(port),
-      sdpHandler_(*this),
-      iceHandler_(*this),
-      dtlsHandler_(*this, false),  // taylor 写死 dtls client
-      rtpHandler_(*this),
-      rtcpHandler_(*this),
-      srtpHandler_(*this),
-      dataChannelHandler_(*this),
-      pullHandler_(*this),
-      initTimeMs_(g_now_ms),
-      pliTimer_(*this),
-      dtlsTimer_(*this) {}
+      // sdpHandler_(*this),
+      // iceHandler_(*this),
+      // dtlsHandler_(*this, false),  // taylor 写死 dtls client
+      rtpHandler_(*this)
+      // rtcpHandler_(*this),
+      // srtpHandler_(*this),
+      // dataChannelHandler_(*this),
+      // pullHandler_(*this),
+      // initTimeMs_(g_now_ms),
+      // pliTimer_(*this),
+      // dtlsTimer_(*this) {}
+{}
 
 PeerConnection::~PeerConnection() {
-  TimerManager::Instance()->KillTimer(&this->pliTimer_);
+  // TimerManager::Instance()->KillTimer(&this->pliTimer_);
 
   // OPT: when dtls completes kill timer
-  TimerManager::Instance()->KillTimer(&this->dtlsTimer_);
+  // TimerManager::Instance()->KillTimer(&this->dtlsTimer_);
 }
 
 // vBufSend is encrypted data if RTP
 int PeerConnection::SendToClient(const std::vector<char> &vBufSend) const {
+  /*
   int r = rand() % 100;
   if (r < kDownlossRateMul100) {
     tylog("down rand=%d lostrate=%d%%, drop!", r, kDownlossRateMul100);
@@ -47,6 +49,7 @@ int PeerConnection::SendToClient(const std::vector<char> &vBufSend) const {
   }
   tylog("sendto succ buf size=%ld, ip=%s, port=%d.", sendtoLen,
         clientIP_.data(), clientPort_);
+*/
 
   return 0;
 }
@@ -65,6 +68,7 @@ int PeerConnection::HandlePacket(const std::vector<char> &vBufReceive) {
   // packType number is little, so we don't use map-callback style, just
   // switch-case
   switch (packType) {
+    /*
     case PacketType::STUN: {
       DumpRecvPacket(vBufReceive);
       ret = iceHandler_.HandleIcePacket(vBufReceive);
@@ -84,6 +88,7 @@ int PeerConnection::HandlePacket(const std::vector<char> &vBufReceive) {
       }
       break;
     }
+*/
 
     case PacketType::RTP: {
       // dump recv data after decrypting according to RTP/RTCP

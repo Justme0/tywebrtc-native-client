@@ -105,23 +105,23 @@ class PeerConnection {
   std::string clientIP_;
   int clientPort_ = 0;
 
-  SdpHandler sdpHandler_;  // for signal
+  // SdpHandler sdpHandler_;  // for signal
 
-  IceHandler iceHandler_;
-  DtlsHandler dtlsHandler_;
+  // IceHandler iceHandler_;
+  // DtlsHandler dtlsHandler_;
   RtpHandler rtpHandler_;
-  RtcpHandler rtcpHandler_;
-  SrtpHandler srtpHandler_;
-  DataChannelHandler dataChannelHandler_;
+  // RtcpHandler rtcpHandler_;
+  // SrtpHandler srtpHandler_;
+  // DataChannelHandler dataChannelHandler_;
 
-  PushHandler pushHandler_;
-  PullHandler pullHandler_;
+  // PushHandler pushHandler_;
+  // PullHandler pullHandler_;
 
   int64_t initTimeMs_ = 0;        // construct *this obj time
   int64_t lastActiveTimeMs_ = 0;  // last receive data time
 
-  PLITimer pliTimer_;
-  DTLSTimer dtlsTimer_;
+  // PLITimer pliTimer_;
+  // DTLSTimer dtlsTimer_;
 };
 
 #endif  // PC_PEER_CONNECTION_H_
