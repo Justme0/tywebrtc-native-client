@@ -45,18 +45,20 @@ std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(
 }
 
 // get rtmp play fd, O(n).
-// std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(
-//     int targetFd) const {
-//   for (const std::pair<ClientSrcId, std::shared_ptr<PeerConnection>> &p :
-//        client2PC_) {
-//     if (p.second->pullHandler_.p_playSocket_ != nullptr &&
-//         *p.second->pullHandler_.p_playSocket_ == targetFd) {
-//       return p.second;
-//     }
-//   }
-//
-//   return nullptr;
-// }
+std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(
+    int targetFd) const {
+  /*
+  for (const std::pair<ClientSrcId, std::shared_ptr<PeerConnection>> &p :
+       client2PC_) {
+    if (p.second->pullHandler_.p_playSocket_ != nullptr &&
+        *p.second->pullHandler_.p_playSocket_ == targetFd) {
+      return p.second;
+    }
+  }
+*/
+
+  return nullptr;
+}
 
 void PCManager::CleanTimeoutPeerConnection() {
   for (auto it = this->client2PC_.begin(); it != client2PC_.end();) {
@@ -74,6 +76,8 @@ void PCManager::CleanTimeoutPeerConnection() {
 
 // 收到 rtp/rtcp 时dump，注意下行也会收到rtcp
 void DumpRecvPacket(const std::vector<char> &packet) {
+  /*
+>>>>>>> origin/windows
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
       sendto(g_dumpRecvSockfd, packet.data(), packet.size(), 0,
@@ -82,10 +86,13 @@ void DumpRecvPacket(const std::vector<char> &packet) {
     tylog("sendto errorno=%d[%s]", errno, strerror(errno));
     // return -1;
   }
+*/
 }
 
 // 发包前dump未加密的包，包括发给源client和下游peer
 void DumpSendPacket(const std::vector<char> &packet) {
+  /*
+>>>>>>> origin/windows
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
       sendto(g_dumpSendSockfd, packet.data(), packet.size(), 0,
@@ -94,6 +101,7 @@ void DumpSendPacket(const std::vector<char> &packet) {
     tylog("sendto errorno=%d[%s]", errno, strerror(errno));
     // return -1;
   }
+*/
 }
 
 // from https://ffmpeg.org/doxygen/3.0/log_8c_source.html#l00224
@@ -145,9 +153,10 @@ class SrsFFmpegLogHelper {
 
   // from librtmp/log.c rtmp_log_default()
   static void rtmpLog(int level, const char *format, va_list vl) {
-    // if (level > RTMP_debuglevel) {
-    //   return;
-    // }
+    /*
+    if (level > RTMP_debuglevel) {
+      return;
+    }
 
 #define MAX_PRINT_LEN 2048
     char str[MAX_PRINT_LEN] = "";
@@ -156,6 +165,7 @@ class SrsFFmpegLogHelper {
 
     // should check level value
     tylog("%s %s", levels[level], str);
+    */
   }
 
   // @brief FFmpeg log callback function

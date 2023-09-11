@@ -17,7 +17,7 @@ PeerConnection::PeerConnection(const std::string &ip, int port)
       // srtpHandler_(*this),
       // dataChannelHandler_(*this),
       // pullHandler_(*this),
-    initTimeMs_(g_now_ms) {}
+      initTimeMs_(g_now_ms) {}
       // pliTimer_(*this),
       // dtlsTimer_(*this) {}
 
@@ -30,6 +30,7 @@ PeerConnection::~PeerConnection() {
 
 // vBufSend is encrypted data if RTP
 int PeerConnection::SendToClient(const std::vector<char> &vBufSend) const {
+  /*
   int r = rand() % 100;
   if (r < kDownlossRateMul100) {
     tylog("down rand=%d lostrate=%d%%, drop!", r, kDownlossRateMul100);
@@ -47,6 +48,7 @@ int PeerConnection::SendToClient(const std::vector<char> &vBufSend) const {
   }
   tylog("sendto succ buf size=%ld, ip=%s, port=%d.", sendtoLen,
         clientIP_.data(), clientPort_);
+*/
 
   return 0;
 }

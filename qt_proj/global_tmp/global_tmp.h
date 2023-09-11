@@ -101,6 +101,7 @@ class PCManager {
 void DumpRecvPacket(const std::vector<char>& packet);
 void DumpSendPacket(const std::vector<char>& packet);
 
+/*
 // tmp
 inline int mkdir_p(const char* path, mode_t mode) {
   const char* p;
@@ -130,7 +131,6 @@ inline int mkdir_p(const char* path, mode_t mode) {
   return 0;
 }
 
-/*
 inline int SetNonBlock(int iSock) {
   int iFlags = fcntl(iSock, F_GETFL, 0);
   if (iFlags == -1) {

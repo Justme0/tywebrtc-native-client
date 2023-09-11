@@ -14,31 +14,7 @@ extern "C"
 #include "libavutil/imgutils.h"
 }
 
-using namespace std;
-
-// TODO: should save to remote DB ? must refactor! Now we use singleton
-// OPT2: move to tylib
-template <class T>
-class Singleton : private T {
-public:
-    // may have param
-    static T& Instance() {
-        // 1. C++11: If control enters the declaration concurrently while the
-        // variable is being initialized, the concurrent execution shall wait for
-        // completion of the initialization.
-        // 2. Lazy evaluation.
-        static Singleton<T> s;
-
-        return s;
-    }
-
-    Singleton(const Singleton&) = delete;
-    Singleton& operator=(const Singleton&) = delete;
-
-private:
-    Singleton() {}
-    ~Singleton() {}
-};
+#include "pc/peer_connection.h"
 
 class UdpServer : public QThread {
 public:
@@ -59,6 +35,7 @@ public:
         connect(udpSocket_, &QUdpSocket::readyRead, this, &UdpServer::readPendingDatagrams);
     }
 
+
     void readPendingDatagrams()
     {
         QHostAddress addr; //用于获取发送者的 IP 和端口
@@ -77,7 +54,11 @@ public:
             // QString my_formatted_string = QString("%1/%2-%3.txt").arg("~", 2232, "Jane");
 
             // qDebug() << QString("recv from %1:%2, msg=%3.").arg(addr.toString().arg(port).arg(arr));
-            qDebug() << addr.toString() << ":" <<port << "=" << QString( arr);
+            qDebug() << addr.toString() << ":" <<port << ", size= " << arr.size();
+
+            static PeerConnection pc(addr.toString().toStdString(), (int)port);
+
+            pc.HandlePacket(std::vector<char>(arr.begin(), arr.end()));
         }
         qDebug() << "exit while reading";
     }
@@ -89,7 +70,7 @@ public:
     }
 
 private:
-    QUdpSocket * udpSocket_ =nullptr;
+    QUdpSocket* udpSocket_ =nullptr;
 };
 
 void MyPing() {
@@ -109,6 +90,8 @@ void VideoPlayer::startPlay(QString url)
 
 void VideoPlayer::run()
 {
+    return ; // not recv rtmp
+
     AVFormatContext *pFormatCtx; //音视频封装格式上下文结构体
     AVCodecContext  *pCodecCtx;  //音视频编码器上下文结构体
     const AVCodec *pCodec; //音视频编码器结构体

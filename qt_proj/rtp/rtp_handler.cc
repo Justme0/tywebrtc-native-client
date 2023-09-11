@@ -247,7 +247,8 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
       }
 */
     }
-/*
+
+    /*
     tylog("video h264 frames.size=%zu.", h264Frames.size());
     assert(h264Frames.size() <= 1);  // tmp
     for (const std::string &frame : h264Frames) {
@@ -269,6 +270,7 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
     }
 */
   } else {
+    /*
     if (0 == firstRtpAudioTs_) {
       firstRtpAudioTs_ = rtpHeader.getTimestamp();
     }
@@ -353,7 +355,8 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
         tylog("rtmp send audio ret=%d", ret);
         return ret;
       }
-    } */
+    }
+*/
   }
 
   return 0;
@@ -363,7 +366,7 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
 
 SSRCInfo::SSRCInfo(RtpHandler &belongingRtpHandler)
     : rtpReceiver(*this),
-      //rtpSender(*this),
+      // rtpSender(*this),
       belongingRtpHandler(belongingRtpHandler) {}
 
 std::string SSRCInfo::ToString() const {
@@ -595,17 +598,6 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
 
     for (RtpBizPacket &packet : orderedPackets) {
       ret = DumpPacket(packet.rtpRawPacket);
-     //  ret = DumpPacket(packet.rtpRawPacket, ssrcInfo.h264Unpacketizer);
-      // push to other server
-      // if (this->belongingPeerConnection_.pushHandler_.InitSucc()) {
-      //   // OPT: first frame should be I frame; if lost packet should drop the
-      //   // gop
-      //   ret = DumpPacket(packet.rtpRawPacket, ssrcInfo.h264Unpacketizer);
-      //   if (ret) {
-      //     tylog("dump uplink packet ret=%d, not return err :)", ret);
-      //     // return ret;
-      //   }
-      // }
 
       // send to peer
       // ret = SendToPeer_(packet);
@@ -614,8 +606,6 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
 
       //   return ret;
       // }
-
-      // decode and render
     }
   } else {
     tylog("receive unknown type of data=%s, return", mediaType.data());

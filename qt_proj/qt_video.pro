@@ -14,25 +14,26 @@ TEMPLATE = app
 
 SOURCES += \
     *.cpp \
-    pc/peer_connection.cc \
-    global_tmp/global_tmp.cc \
     codec/video_codec.cc \
-    transport/receiver/receiver.cc \
+    global_tmp/global_tmp.cc \
+    pc/peer_connection.cc \
+    rtp/pack_unpack/audio_to_rtp.cc \
     rtp/rtp_handler.cc \
     third_party/tylib/tylib/time/timer.cc \
-    rtp/pack_unpack/audio_to_rtp.cc \
+    transport/receiver/receiver.cc \
     rtp/pack_unpack/rtp_to_vp8.cc
 
 HEADERS  += \
     *.h \
-    third_party/tylib/tylib/time/*.h \
-    pc/*.h \
     codec/*.h \
     global_tmp/*.h \
     log/*.h \
-    transport/receiver/*.h \
+    pc/*.h \
     rtp/pack_unpack/*.h \
     rtp/rtcp/*.h \
+    third_party/tylib/tylib/time/*.h \
+    transport/receiver/*.h \
+    transport/sender/*.h \
     rtp/*.h
 
 FORMS    += \
@@ -63,5 +64,6 @@ LIBS += $$PWD/third_party/ffmpeg/lib/avcodec.lib \
         $$PWD/third_party/ffmpeg/lib/avutil.lib \
         $$PWD/third_party/ffmpeg/lib/postproc.lib \
         $$PWD/third_party/ffmpeg/lib/swresample.lib \
-        $$PWD/third_party/ffmpeg/lib/swscale.lib
+        $$PWD/third_party/ffmpeg/lib/swscale.lib \
+        -l ws2_32
 }

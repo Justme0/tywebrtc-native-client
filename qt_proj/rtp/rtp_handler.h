@@ -27,7 +27,7 @@ struct SSRCInfo {
   // audio don't use h264Unpacketizer
   // H264Unpacketizer h264Unpacketizer;
   // H264Packetizer h264Packetizer;
-  AudioPacketizer audioPacketizer;
+  // AudioPacketizer audioPacketizer;
 
   RtpReceiver rtpReceiver;
   // RtpSender rtpSender;

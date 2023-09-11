@@ -88,6 +88,7 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
     return {};
   }
 
+  /*
   if (kNackTimeMs <= waitMs && waitMs < kPLITimeMs &&
       jitterBuffer_.size() <= kJitterMaxSize) {
     tylog("wait %ldms, to nack", waitMs);
@@ -107,7 +108,6 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
     assert(0 != kMediaSrcSSRC &&
            kMediaSrcSSRC == firstRtpHeader.getSSRC());  // already recv
 
-    /* taylor: should have
     int ret = this->belongingSSRCInfo_.belongingRtpHandler
                   .belongingPeerConnection_.rtcpHandler_.CreateNackReportSend(
                       nackSeqs, kSelfRtcpSSRC, kMediaSrcSSRC);
@@ -117,9 +117,7 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
 
       return {};
     }
-*/
 
-    return {};
   }
 
   // wait too long for audio, pop all
@@ -142,7 +140,6 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
   tylog("PLI, first packet waitMs=%ld too long, packet=%s.", waitMs,
         firstPacket.ToString().data());
 
-  /*
   const uint32_t kSelfRtcpSSRC = 1;
   const uint32_t kMediaSrcSSRC =
       belongingSSRCInfo_.belongingRtpHandler.upVideoSSRC;
