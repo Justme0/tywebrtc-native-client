@@ -11,7 +11,7 @@ extern "C" {
 // #include "codec/audio_codec.h"
 #include "rtp/pack_unpack/audio_to_rtp.h"
 #include "rtp/pack_unpack/rtp_to_vp8.h"
-// #include "transport/receiver/receiver.h"
+#include "transport/receiver/receiver.h"
 // #include "transport/sender/sender.h"
 
 // don't include whole head file avoid recycle reference
@@ -25,12 +25,12 @@ struct SSRCInfo {
 
   // why define ssrc's unpacketizer: save unpacked frame e.g. FU-A
   // audio don't use h264Unpacketizer
-  H264Unpacketizer h264Unpacketizer;
-  H264Packetizer h264Packetizer;
+  // H264Unpacketizer h264Unpacketizer;
+  // H264Packetizer h264Packetizer;
   AudioPacketizer audioPacketizer;
 
   RtpReceiver rtpReceiver;
-  RtpSender rtpSender;
+  // RtpSender rtpSender;
 
   // received biggest pkt
   uint16_t biggestSeq = 0;
@@ -47,7 +47,8 @@ class RtpHandler {
   int HandleRtpPacket(const std::vector<char> &vBufReceive);
   // int GetUpAudioSSRC(uint32_t& ssrc) const;
   // int GetUpVideoSSRC(uint32_t& ssrc) const;
-  int DumpPacket(const std::vector<char> &packet, H264Unpacketizer &unpacker);
+  // int DumpPacket(const std::vector<char> &packet, H264Unpacketizer &unpacker);
+  int DumpPacket(const std::vector<char> &packet);
   int WriteWebmFile(const std::string &frame, uint32_t rtpTs,
                     const std::string &mediaType, bool bKeyFrame);
 
@@ -67,7 +68,7 @@ class RtpHandler {
 
  public:  // tmp
   // downlink may have multiple
-  SrsAudioTranscoder audioTranscoderDownlink_;
+  // SrsAudioTranscoder audioTranscoderDownlink_;
 
   // OPT: use struct
   // write uplink stream to WebM file.
@@ -89,7 +90,7 @@ class RtpHandler {
 
  private:
   // uplink
-  SrsAudioTranscoder audioTranscoder_;
+  // SrsAudioTranscoder audioTranscoder_;
   RtpDepacketizerVp8 videoTranscoder_;
 };
 

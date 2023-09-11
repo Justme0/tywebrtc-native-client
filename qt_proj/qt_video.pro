@@ -15,17 +15,24 @@ TEMPLATE = app
 SOURCES += \
     *.cpp \
     pc/peer_connection.cc \
+    global_tmp/global_tmp.cc \
     codec/video_codec.cc \
+    transport/receiver/receiver.cc \
     rtp/rtp_handler.cc \
+    third_party/tylib/tylib/time/timer.cc \
     rtp/pack_unpack/audio_to_rtp.cc \
     rtp/pack_unpack/rtp_to_vp8.cc
 
 HEADERS  += \
     *.h \
+    third_party/tylib/tylib/time/*.h \
     pc/*.h \
     codec/*.h \
+    global_tmp/*.h \
     log/*.h \
+    transport/receiver/*.h \
     rtp/pack_unpack/*.h \
+    rtp/rtcp/*.h \
     rtp/*.h
 
 FORMS    += \

@@ -13,9 +13,9 @@
 #include "tylib/string/format_string.h"
 #include "tylib/time/time_util.h"
 
-// #include "global_tmp/global_tmp.h"
+#include "global_tmp/global_tmp.h"
 #include "log/log.h"
-// #include "rtp/rtcp/rtcp_parser.h"
+#include "rtp/rtcp/rtcp_parser.h"
 
 // define cycle as int64_t (use 47 bit at most, most significant bit for sign
 // if need), first value is 0. e.g. 8Mbps, each video packet is 1000 Byte, so
@@ -523,7 +523,11 @@ static inline void rtp_write_uint32(uint8_t* ptr, uint32_t val) {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                        header extension                       |
 // |                             ....                              |
+
+#if _WIN32
 #include "winsock.h"
+#endif
+
 class RtpFixedHeaderExt {
  public:
   RtpFixedHeaderExt() : extensionpayload(0), extensionlength(0) {}
@@ -774,7 +778,11 @@ struct RtpBizPacket {
   }
 
   // from enter jitter to now duration
-  int64_t WaitTimeMs() const { return g_now_ms - enterJitterTimeMs; }
+  int64_t WaitTimeMs() const {
+
+    // return g_now_ms - enterJitterTimeMs;
+    return 0;
+  }
 
   // when add new member, must modify constructor, ToString(), etc.
   std::vector<char> rtpRawPacket;
