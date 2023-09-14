@@ -331,14 +331,14 @@ int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(
       }
     }
 
-    ret = this->belongingRtpHandler_.WriteWebmFile(
-        {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
-        kMediaTypeVideo, is_key_frame);
-    if (ret) {
-      tylog("write webm video file ret=%d.", ret);
+    // ret = this->belongingRtpHandler_.WriteWebmFile(
+    //     {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
+    //     kMediaTypeVideo, is_key_frame);
+    // if (ret) {
+    //   tylog("write webm video file ret=%d.", ret);
 
-      return ret;
-    }
+    //   return ret;
+    // }
 
     AVFrame* yuvFrame = decoder->Decode((uint8_t*)m_Vp8RawData, m_RawDataLen);
     bool ChangeResolution = false;
@@ -359,40 +359,49 @@ int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(
         }
       }
     }
-    if ((encoder == NULL || ChangeResolution) && yuvFrame) {
-      if (!encoder) {
-        encoder = new CodecEncoder();
-      }
+    sws_scale(pImgConvertCtx, (uint8_t const * const *) yuvFrame->data, yuvFrame->linesize,
+              0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
-      encoder_width = yuvFrame->width;
-      encoder_height = yuvFrame->height;
-      CodecParam Param;
-      Param.width = yuvFrame->width;
-      Param.height = yuvFrame->height;
+    //把这个RGB数据 用QImage加载
+    QImage tmpImg((uchar *)pOutBuffer, pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB32);
+    QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
+    emit sig_GetOneFrame(image);  //发送信号
 
-      // to constant ?
-      Param.bitRate = 700000;
-      Param.codecName = "libx264";
 
-      // 如果分辨率改变了要重新建立编码器
-      if (!encoder->InitEncoder(Param)) {
-        tylog("InitEncoder failed");
+    // if ((encoder == NULL || ChangeResolution) && yuvFrame) {
+    //   if (!encoder) {
+    //     encoder = new CodecEncoder();
+    //   }
 
-        return -1;
-      }
-    }
-    AVPacket* h264Packet = NULL;
-    assert(nullptr != encoder);  // tmp, not to use ptr
-    if (encoder) {
-      h264Packet = encoder->Encode(yuvFrame, is_key_frame, true);
-    }
-    if (h264Packet) {
-      tylog("avpacket size=%d, dts=%lu, pts=%lu, nowMs=%lu.", h264Packet->size,
-            h264Packet->dts, h264Packet->pts, g_now_ms);
-      o_h264Frames->emplace_back(h264Packet->data,
-                                 h264Packet->data + h264Packet->size);
-    }
-    encoder->UnrefPacket();
+    //   encoder_width = yuvFrame->width;
+    //   encoder_height = yuvFrame->height;
+    //   CodecParam Param;
+    //   Param.width = yuvFrame->width;
+    //   Param.height = yuvFrame->height;
+
+    //   // to constant ?
+    //   Param.bitRate = 700000;
+    //   Param.codecName = "libx264";
+
+    //   // 如果分辨率改变了要重新建立编码器
+    //   if (!encoder->InitEncoder(Param)) {
+    //     tylog("InitEncoder failed");
+
+    //     return -1;
+    //   }
+    // }
+    // AVPacket* h264Packet = NULL;
+    // assert(nullptr != encoder);  // tmp, not to use ptr
+    // if (encoder) {
+    //   h264Packet = encoder->Encode(yuvFrame, is_key_frame, true);
+    // }
+    // if (h264Packet) {
+    //   tylog("avpacket size=%d, dts=%lu, pts=%lu, nowMs=%lu.", h264Packet->size,
+    //         h264Packet->dts, h264Packet->pts, g_now_ms);
+    //   o_h264Frames->emplace_back(h264Packet->data,
+    //                              h264Packet->data + h264Packet->size);
+    // }
+    // encoder->UnrefPacket();
 
     m_RawDataLen = 0;
     is_key_frame = false;
