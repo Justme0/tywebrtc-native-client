@@ -21,8 +21,7 @@ class RtpDepacketizerVp8 {
   explicit RtpDepacketizerVp8(RtpHandler& rtpHandler);
   ~RtpDepacketizerVp8();
 
-  int VideoUnPackVp8RtpStm(const char* pData, int Length,
-                           std::vector<std::string>* o_h264Frames);
+  int VideoUnPackVp8RtpStm(const char* pData, int Length, AVFrame** o_yuvFrame);
   static bool IsIdrFrame(char* buf, int buf_len);
 
  private:

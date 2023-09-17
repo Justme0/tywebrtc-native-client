@@ -18,8 +18,8 @@ PeerConnection::PeerConnection(const std::string &ip, int port)
       // dataChannelHandler_(*this),
       // pullHandler_(*this),
       initTimeMs_(g_now_ms) {}
-      // pliTimer_(*this),
-      // dtlsTimer_(*this) {}
+// pliTimer_(*this),
+// dtlsTimer_(*this) {}
 
 PeerConnection::~PeerConnection() {
   // TimerManager::Instance()->KillTimer(&this->pliTimer_);
@@ -67,27 +67,27 @@ int PeerConnection::HandlePacket(const std::vector<char> &vBufReceive) {
   // packType number is little, so we don't use map-callback style, just
   // switch-case
   switch (packType) {
-    /*
-    case PacketType::STUN: {
-      DumpRecvPacket(vBufReceive);
-      ret = iceHandler_.HandleIcePacket(vBufReceive);
-      if (ret) {
-        tylog("handle ice packet fail, ret=%d", ret);
-        return ret;
+      /*
+      case PacketType::STUN: {
+        DumpRecvPacket(vBufReceive);
+        ret = iceHandler_.HandleIcePacket(vBufReceive);
+        if (ret) {
+          tylog("handle ice packet fail, ret=%d", ret);
+          return ret;
+        }
+        break;
       }
-      break;
-    }
 
-    case PacketType::DTLS: {
-      DumpRecvPacket(vBufReceive);
-      ret = dtlsHandler_.HandleDtlsPacket(vBufReceive);
-      if (ret) {
-        tylog("handle dtls packet fail, ret=%d", ret);
-        return ret;
+      case PacketType::DTLS: {
+        DumpRecvPacket(vBufReceive);
+        ret = dtlsHandler_.HandleDtlsPacket(vBufReceive);
+        if (ret) {
+          tylog("handle dtls packet fail, ret=%d", ret);
+          return ret;
+        }
+        break;
       }
-      break;
-    }
-*/
+  */
 
     case PacketType::RTP: {
       // dump recv data after decrypting according to RTP/RTCP

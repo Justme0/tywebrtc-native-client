@@ -23,7 +23,7 @@ enum FuDefs { kSBit = 0x80, kEBit = 0x40, kRBit = 0x20 };
 struct VideoFuIndicator {
   uint8_t type : 5;  // nalu的类型，RFC3984中FU-A为28，FU-B为29
   uint8_t
-      nri : 2;    // 参考指示，0~3，这里对于单一nalu，将会使用2作为一组的数据包的结束
+      nri : 2;  // 参考指示，0~3，这里对于单一nalu，将会使用2作为一组的数据包的结束
   uint8_t f : 1;  // 强制0位，无语法冲突为0，否则为1
 };
 

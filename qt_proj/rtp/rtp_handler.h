@@ -10,6 +10,7 @@ extern "C" {
 
 // #include "codec/audio_codec.h"
 #include "rtp/pack_unpack/audio_to_rtp.h"
+#include "rtp/pack_unpack/rtp_to_h264.h"
 #include "rtp/pack_unpack/rtp_to_vp8.h"
 #include "transport/receiver/receiver.h"
 // #include "transport/sender/sender.h"
@@ -25,7 +26,7 @@ struct SSRCInfo {
 
   // why define ssrc's unpacketizer: save unpacked frame e.g. FU-A
   // audio don't use h264Unpacketizer
-  // H264Unpacketizer h264Unpacketizer;
+  H264Unpacketizer h264Unpacketizer;
   // H264Packetizer h264Packetizer;
   // AudioPacketizer audioPacketizer;
 
@@ -47,8 +48,7 @@ class RtpHandler {
   int HandleRtpPacket(const std::vector<char> &vBufReceive);
   // int GetUpAudioSSRC(uint32_t& ssrc) const;
   // int GetUpVideoSSRC(uint32_t& ssrc) const;
-  // int DumpPacket(const std::vector<char> &packet, H264Unpacketizer &unpacker);
-  int DumpPacket(const std::vector<char> &packet);
+  int DumpPacket(const std::vector<char> &packet, H264Unpacketizer &unpacker);
   int WriteWebmFile(const std::string &frame, uint32_t rtpTs,
                     const std::string &mediaType, bool bKeyFrame);
 
@@ -89,9 +89,11 @@ class RtpHandler {
   uint32_t firstRtpAudioTs_ = 0;
 
  private:
-  // uplink
-  // SrsAudioTranscoder audioTranscoder_;
+  // uplink SrsAudioTranscoder audioTranscoder_;
   RtpDepacketizerVp8 videoTranscoder_;
+
+  // for decode H.264 to yuv
+  CodecDecoder *decoder = nullptr;
 };
 
 #endif  // RTP_RTP_HANDLER_H_

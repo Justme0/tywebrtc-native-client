@@ -5,9 +5,8 @@
 
 #include <cstdint>
 
-#include "tylib/string/format_string.h"
-
 #include "log/log.h"
+#include "tylib/string/format_string.h"
 
 // #define RRTR_BT 4
 // #define DLRR_BT 5

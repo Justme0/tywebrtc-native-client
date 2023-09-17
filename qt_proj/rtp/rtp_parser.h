@@ -12,14 +12,13 @@
 #include <utility>
 #include <vector>
 
+#include "global_tmp/global_tmp.h"
+#include "log/log.h"
+#include "rtp/rtcp/rtcp_parser.h"
 #include "tylib/string/any_to_string.h"
 #include "tylib/string/format_string.h"
 #include "tylib/time/time_util.h"
 #include "tylib/time/timer.h"
-
-#include "global_tmp/global_tmp.h"
-#include "log/log.h"
-#include "rtp/rtcp/rtcp_parser.h"
 
 // define cycle as int64_t (use 47 bit at most, most significant bit for sign
 // if need), first value is 0. e.g. 8Mbps, each video packet is 1000 Byte, so
@@ -39,7 +38,7 @@ inline std::string PowerSeqToString(PowerSeqT powerSeq) {
   return tylib::AnyToString(SplitPowerSeq(powerSeq));
 }
 
-#define VIDEO_RTP_EXTERN_NAME_LEN (2)   // 扩展位名字
+#define VIDEO_RTP_EXTERN_NAME_LEN (2)  // 扩展位名字
 #define VIDEO_RTP_EXTERN_VALUE_LEN (4)  // 扩展数据长度单位为4个字节
 #define VIDEO_RTP_EXTERN_LEN_VALUE_LEN (2)  // 扩展数据长度占据2字节
 
@@ -686,6 +685,7 @@ class RtpHeader {
       case 99:
       case 100:
       case 101:
+      case 106:
       case 107:
       case 116:
       case 117:
@@ -725,6 +725,7 @@ class RtpHeader {
   uint8_t hasextension : 1;
   uint8_t padding : 1;
   uint8_t version : 2;
+
   uint8_t payloadtype : 7;
   uint8_t marker : 1;
 
@@ -783,7 +784,6 @@ struct RtpBizPacket {
 
   // from enter jitter to now duration
   int64_t WaitTimeMs() const {
-
     // return g_now_ms - enterJitterTimeMs;
     return 0;
   }

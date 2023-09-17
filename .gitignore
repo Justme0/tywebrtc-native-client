@@ -1,3 +1,6 @@
+qt_proj/third_party/
+.vscode
+
 # C++ objects and libs
 *.slo
 *.lo

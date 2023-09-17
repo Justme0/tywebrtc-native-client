@@ -1,10 +1,9 @@
 #ifndef RTP_RTCP_RTCP_NACK_H_
 #define RTP_RTCP_RTCP_NACK_H_
 
+#include <cstdint>
 #include <set>
 #include <vector>
-
-#include <cstdint>
 
 int CreateNackReport(const std::set<int>& lostSeqs, uint32_t localSSRC,
                      uint32_t remoteSSRC);

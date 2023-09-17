@@ -77,10 +77,12 @@ int bs_read(bs_t *s, int i_count) {
       // i_shr>=0，说明要读取的比特都处于当前字节内
       //这个阶段，一次性就读完了，然后返回i_result(退出了函数)
       /* more in the buffer than requested */
-      i_result |= (*s->p >> i_shr) &
-                  i_mask[i_count];  //“|=”:按位或赋值，A |= B 即 A = A|B
-                                    //|=应该在最后执行，把结果放在i_result(按位与优先级高于复合操作符|=)
-                                    // i_mask[i_count]最右侧各位都是1,与括号中的按位与，可以把括号中的结果复制过来
+      i_result |=
+          (*s->p >> i_shr) &
+          i_mask
+              [i_count];  //“|=”:按位或赋值，A |= B 即 A = A|B
+                          //|=应该在最后执行，把结果放在i_result(按位与优先级高于复合操作符|=)
+                          // i_mask[i_count]最右侧各位都是1,与括号中的按位与，可以把括号中的结果复制过来
       //!=,左边的i_result在这儿全是0，右侧与它按位或，还是复制结果过来了，好象好几步都多余
       /*读取后，更新结构体里的字段值*/
       s->i_left -= i_count;  //即i_left = i_left -
@@ -94,16 +96,18 @@ int bs_read(bs_t *s, int i_count) {
       }
       return (i_result);  //可能的返回值之一为：00000000 00000000 00000000
                           // 00000001 (4字节长)
-    } else                /* i_shr < 0 ,跨字节的情况*/
+    } else /* i_shr < 0 ,跨字节的情况*/
     {
       //这个阶段，是while的一次循环，可能还会进入下一次循环，第一次和最后一次都可能读取的非整字节，比如第一次读了3比特，中间读取了2字节(即2x8比特)，最后一次读取了1比特，然后退出while循环
       //当前字节剩余的未读位数，比要读取的位数少，比如当前字节有3位未读过，而本次要读7位
       //???对当前字节来说，要读的比特，都在最右边，所以不再移位了(移位的目的是把要读的比特放在当前字节最右)
       /* less(较少的) in the buffer than requested */
-      i_result |= (*s->p & i_mask[s->i_left])
-                  << -i_shr;  //"-i_shr"相当于取了绝对值
-                              //|= 和 << 都是位操作符，优先级相同，所以从左往右顺序执行
-                              //举例:int|char ，其中int是4字节，char是1字节，sizeof(int|char)是4字节
+      i_result |=
+          (*s->p & i_mask[s->i_left])
+          << -i_shr;  //"-i_shr"相当于取了绝对值
+                      //|= 和 << 都是位操作符，优先级相同，所以从左往右顺序执行
+                      //举例:int|char
+                      //，其中int是4字节，char是1字节，sizeof(int|char)是4字节
       // i_left最大是8，最小是0，取值范围是[0,8]
       i_count -=
           s->i_left;  //待读取的比特数，等于原i_count减去i_left，i_left是当前字节未读过的比特数，而此else阶段，i_left代表的当前字节未读的比特全被读过了，所以减它

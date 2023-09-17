@@ -3,9 +3,9 @@
 #include <cassert>
 
 #include "log/log.h"
-#include "third_party/tylib/tylib/time/timer.h"
 #include "rtp/pack_unpack/pack_unpack_common.h"
 #include "rtp/rtp_parser.h"
+#include "third_party/tylib/tylib/time/timer.h"
 
 int AudioPacketizer::Packetize(const std::vector<char>& stream,
                                uint32_t timestamp,

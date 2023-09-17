@@ -192,8 +192,8 @@ void RtpDepacketizerVp8::Init() {
   m_UnPackParams.PackSeqNo = 0xFFFFFFFF;
 }
 
-int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(
-    const char* pData, int Length, std::vector<std::string>* o_h264Frames) {
+int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(const char* pData, int Length,
+                                             AVFrame** o_yuvFrame) {
   int ret = 0;
 
   if (!pData || Length == 0) {
@@ -312,102 +312,68 @@ int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(
     assert(!"too big shit");
   }
 
-  if (pRtp->getMarker()) {
-    // end of frame, or should use ts change to check if new frame?
-    // https://github.com/meetecho/janus-gateway/blob/master/src/postprocessing/pp-webm.c#L349
-    if (decoder == NULL) {
-      decoder = new CodecDecoder();
-      CodecParam Param;
+  m_UnPackParams.PackSeqNo = Seq;
 
-      tylog("before decode, width=%d, height=%d.", Width_, Height_);
-      assert(Width_ != 0 && Height_ != 0);
-      // for decode not very care
-      Param.width = Width_;
-      Param.height = Height_;
-
-      Param.codecName = "libvpx";
-      if (!decoder->InitDecoder(Param)) {
-        tylog("InitDecoder failed");
-      }
-    }
-
-    // ret = this->belongingRtpHandler_.WriteWebmFile(
-    //     {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
-    //     kMediaTypeVideo, is_key_frame);
-    // if (ret) {
-    //   tylog("write webm video file ret=%d.", ret);
-
-    //   return ret;
-    // }
-
-    AVFrame* yuvFrame = decoder->Decode((uint8_t*)m_Vp8RawData, m_RawDataLen);
-    bool ChangeResolution = false;
-    if (yuvFrame) {
-      ChangeResolution = encoder_width != (uint32_t)yuvFrame->width ||
-                         encoder_height != (uint32_t)yuvFrame->height;
-      if (ChangeResolution) {
-        if (0 == encoder_width || 0 == encoder_height) {
-          tylog(
-              "first set resolution, last width=%d, new width=%d, last "
-              "height=%d, new height=%d",
-              encoder_width, yuvFrame->width, encoder_height, yuvFrame->height);
-        } else {
-          tylog(
-              "normal change resolution, last width=%d, new width=%d, last "
-              "height=%d, new height=%d",
-              encoder_width, yuvFrame->width, encoder_height, yuvFrame->height);
-        }
-      }
-    }
-    sws_scale(pImgConvertCtx, (uint8_t const * const *) yuvFrame->data, yuvFrame->linesize,
-              0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-
-    //把这个RGB数据 用QImage加载
-    QImage tmpImg((uchar *)pOutBuffer, pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB32);
-    QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
-    emit sig_GetOneFrame(image);  //发送信号
-
-
-    // if ((encoder == NULL || ChangeResolution) && yuvFrame) {
-    //   if (!encoder) {
-    //     encoder = new CodecEncoder();
-    //   }
-
-    //   encoder_width = yuvFrame->width;
-    //   encoder_height = yuvFrame->height;
-    //   CodecParam Param;
-    //   Param.width = yuvFrame->width;
-    //   Param.height = yuvFrame->height;
-
-    //   // to constant ?
-    //   Param.bitRate = 700000;
-    //   Param.codecName = "libx264";
-
-    //   // 如果分辨率改变了要重新建立编码器
-    //   if (!encoder->InitEncoder(Param)) {
-    //     tylog("InitEncoder failed");
-
-    //     return -1;
-    //   }
-    // }
-    // AVPacket* h264Packet = NULL;
-    // assert(nullptr != encoder);  // tmp, not to use ptr
-    // if (encoder) {
-    //   h264Packet = encoder->Encode(yuvFrame, is_key_frame, true);
-    // }
-    // if (h264Packet) {
-    //   tylog("avpacket size=%d, dts=%lu, pts=%lu, nowMs=%lu.", h264Packet->size,
-    //         h264Packet->dts, h264Packet->pts, g_now_ms);
-    //   o_h264Frames->emplace_back(h264Packet->data,
-    //                              h264Packet->data + h264Packet->size);
-    // }
-    // encoder->UnrefPacket();
-
-    m_RawDataLen = 0;
-    is_key_frame = false;
+  if (!pRtp->getMarker()) {
+    return 0;
   }
 
-  m_UnPackParams.PackSeqNo = Seq;
+  // end of frame, or should use ts change to check if new frame?
+  // https://github.com/meetecho/janus-gateway/blob/master/src/postprocessing/pp-webm.c#L349
+  if (decoder == NULL) {
+    decoder = new CodecDecoder();
+    CodecParam Param;
+
+    tylog("before decode, width=%d, height=%d.", Width_, Height_);
+    assert(Width_ != 0 && Height_ != 0);
+    // for decode not very care
+    Param.width = Width_;
+    Param.height = Height_;
+
+    Param.codecName = "libvpx";
+    if (!decoder->InitDecoder(Param)) {
+      tylog("InitDecoder failed");
+
+      return -1;
+    }
+  }
+
+  // ret = this->belongingRtpHandler_.WriteWebmFile(
+  //     {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
+  //     kMediaTypeVideo, is_key_frame);
+  // if (ret) {
+  //   tylog("write webm video file ret=%d.", ret);
+
+  //   return ret;
+  // }
+
+  AVFrame* yuvFrame = decoder->Decode((uint8_t*)m_Vp8RawData, m_RawDataLen);
+  if (nullptr == yuvFrame) {
+    tylog("decode to yuvFrame null");
+
+    return -1;
+  }
+  *o_yuvFrame = yuvFrame;
+
+  bool ChangeResolution = ChangeResolution =
+      encoder_width != (uint32_t)yuvFrame->width ||
+      encoder_height != (uint32_t)yuvFrame->height;
+  if (ChangeResolution) {
+    if (0 == encoder_width || 0 == encoder_height) {
+      tylog(
+          "first set resolution, last width=%d, new width=%d, last "
+          "height=%d, new height=%d",
+          encoder_width, yuvFrame->width, encoder_height, yuvFrame->height);
+    } else {
+      tylog(
+          "normal change resolution, last width=%d, new width=%d, last "
+          "height=%d, new height=%d",
+          encoder_width, yuvFrame->width, encoder_height, yuvFrame->height);
+    }
+  }
+
+  m_RawDataLen = 0;
+  is_key_frame = false;
 
   return 0;
 }

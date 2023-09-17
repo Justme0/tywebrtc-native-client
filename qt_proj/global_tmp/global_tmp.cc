@@ -1,10 +1,9 @@
 #include "global_tmp/global_tmp.h"
 
-#include "tylib/ip/ip.h"
-#include "tylib/time/timer.h"
-
 #include "log/log.h"
 #include "pc/peer_connection.h"
+#include "tylib/ip/ip.h"
+#include "tylib/time/timer.h"
 
 // prometheus::Family<prometheus::Gauge> *g_startServer;
 // prometheus::Family<prometheus::Gauge> *g_recvPacketNum;
@@ -77,7 +76,6 @@ void PCManager::CleanTimeoutPeerConnection() {
 // 收到 rtp/rtcp 时dump，注意下行也会收到rtcp
 void DumpRecvPacket(const std::vector<char> &packet) {
   /*
->>>>>>> origin/windows
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
       sendto(g_dumpRecvSockfd, packet.data(), packet.size(), 0,
@@ -92,7 +90,6 @@ void DumpRecvPacket(const std::vector<char> &packet) {
 // 发包前dump未加密的包，包括发给源client和下游peer
 void DumpSendPacket(const std::vector<char> &packet) {
   /*
->>>>>>> origin/windows
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
       sendto(g_dumpSendSockfd, packet.data(), packet.size(), 0,
@@ -141,6 +138,7 @@ class SrsFFmpegLogHelper {
     // ffmpeg
     av_log_set_level(AV_LOG_TRACE);
     av_log_set_callback(ffmpegLog);
+    tylog("set log callback");
 
     // rtmp lib
     // RTMP_LogSetLevel(RTMP_LOGALL);
@@ -205,10 +203,6 @@ class SrsFFmpegLogHelper {
       tylog("%s %s %s", my_get_level_str(level), nameInfo.str().data(),
             codecInfo);
     }
-  }
-
-  static void libcoLog(const char *format, va_list args) {
-    tylog(format, args);
   }
 };
 
