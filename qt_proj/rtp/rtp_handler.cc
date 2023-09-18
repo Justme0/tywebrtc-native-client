@@ -9,13 +9,16 @@
 // #include "global_tmp/global_tmp.h"
 #include "log/log.h"
 #include "pc/peer_connection.h"
-// #include "rtp/pack_unpack/rtp_to_h264.h"
+#include "rtp/pack_unpack/rtp_to_h264.h"
 // #include "rtp/rtcp/rtcp_parser.h"
 #include "rtp/rtp_parser.h"
 // #include "timer/timer.h"
+#include <QImage>
+
 #include "tylib/ip/ip.h"
-#include "tylib/time/timer.h"
 #include "tylib/string/any_to_string.h"
+#include "tylib/time/timer.h"
+#include "videoplayer.h"
 
 // string enum, for print convenience
 const std::string kMediaTypeRtcp = "rtcp";
@@ -27,94 +30,94 @@ const AVRational kVideoTimebase{1, 90000};
 
 RtpHandler::RtpHandler(PeerConnection &pc)
     : belongingPeerConnection_(pc), videoTranscoder_(*this) {
-    /*
-  // opt: may have no audio
-  SrsAudioCodecId from = SrsAudioCodecIdOpus;  // TODO: From SDP?
-  SrsAudioCodecId to = SrsAudioCodecIdAAC;     // The output audio codec.
-  int channels = 2;                            // The output audio channels.
-  int sample_rate = 48000;  // The output audio sample rate in HZ.
-  int bitrate = 64000;      // The output audio bitrate in bps.
-  int ret =
-      audioTranscoder_.initialize(from, to, channels, sample_rate, bitrate);
-  if (ret) {
-    tylog("init audio transcoder ret=%d", ret);
+  /*
+// opt: may have no audio
+SrsAudioCodecId from = SrsAudioCodecIdOpus;  // TODO: From SDP?
+SrsAudioCodecId to = SrsAudioCodecIdAAC;     // The output audio codec.
+int channels = 2;                            // The output audio channels.
+int sample_rate = 48000;  // The output audio sample rate in HZ.
+int bitrate = 64000;      // The output audio bitrate in bps.
+int ret =
+    audioTranscoder_.initialize(from, to, channels, sample_rate, bitrate);
+if (ret) {
+  tylog("init audio transcoder ret=%d", ret);
 
-    assert(!"init audio transcoder fail, should not use assert :)");
-  }
+  assert(!"init audio transcoder fail, should not use assert :)");
+}
 
-  ret = audioTranscoderDownlink_.initialize(
-      SrsAudioCodecIdAAC, SrsAudioCodecIdOpus, 2, 48000, 64000);
-  if (ret) {
-    tylog("init downlink audio transcoder ret=%d", ret);
+ret = audioTranscoderDownlink_.initialize(
+    SrsAudioCodecIdAAC, SrsAudioCodecIdOpus, 2, 48000, 64000);
+if (ret) {
+  tylog("init downlink audio transcoder ret=%d", ret);
 
-    assert(!"init downlink audio transcoder fail, should not use assert :)");
-  }
+  assert(!"init downlink audio transcoder fail, should not use assert :)");
+}
 
-  // init uplink file, should be class or function
-  // check file cmd:
-  // mediainfo filename.webm
-  // ffmpeg -i filename.webm -f null -
-  const std::string &webmFilename = tylib::format_string(
-      "uplink.%s_%d.webm", belongingPeerConnection_.clientIP_.data(),
-      belongingPeerConnection_.clientPort_);
-  avformat_alloc_output_context2(&uplinkFileCtx_, nullptr, "webm",
-                                 webmFilename.data());
+// init uplink file, should be class or function
+// check file cmd:
+// mediainfo filename.webm
+// ffmpeg -i filename.webm -f null -
+const std::string &webmFilename = tylib::format_string(
+    "uplink.%s_%d.webm", belongingPeerConnection_.clientIP_.data(),
+    belongingPeerConnection_.clientPort_);
+avformat_alloc_output_context2(&uplinkFileCtx_, nullptr, "webm",
+                               webmFilename.data());
 
-  if (nullptr == uplinkFileCtx_) {
-    tylog("init uplinkFile fail, should not use assert :)");
-    assert(!"init uplinkFile fail, should not use assert :)");
-  }
+if (nullptr == uplinkFileCtx_) {
+  tylog("init uplinkFile fail, should not use assert :)");
+  assert(!"init uplinkFile fail, should not use assert :)");
+}
 
-  // Add video stream
-  AVStream *video_stream = avformat_new_stream(uplinkFileCtx_, nullptr);
-  if (!video_stream) {
-    tylog("init uplinkFile fail, should not use assert :)");
-    assert(!"init uplinkFile fail, should not use assert :)");
-  }
-  video_stream->codecpar->codec_id = AV_CODEC_ID_VP8;
-  video_stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
-  // OPT: use const or config
-  video_stream->codecpar->width = 450;
-  video_stream->codecpar->height = 450;
-  videoStreamIndex_ = video_stream->index;
-  tylog("video stream index=%d.", videoStreamIndex_);
+// Add video stream
+AVStream *video_stream = avformat_new_stream(uplinkFileCtx_, nullptr);
+if (!video_stream) {
+  tylog("init uplinkFile fail, should not use assert :)");
+  assert(!"init uplinkFile fail, should not use assert :)");
+}
+video_stream->codecpar->codec_id = AV_CODEC_ID_VP8;
+video_stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+// OPT: use const or config
+video_stream->codecpar->width = 450;
+video_stream->codecpar->height = 450;
+videoStreamIndex_ = video_stream->index;
+tylog("video stream index=%d.", videoStreamIndex_);
 
-  // Add audio stream
-  AVStream *audio_stream = avformat_new_stream(uplinkFileCtx_, nullptr);
-  if (!audio_stream) {
-    tylog("init uplinkFile fail, should not use assert :)");
-    assert(!"init uplinkFile fail, should not use assert :)");
-  }
-  audio_stream->codecpar->codec_id = AV_CODEC_ID_OPUS;
-  audio_stream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
-  audio_stream->codecpar->sample_rate = 48000;
-  // OPT: use const or config
-  audio_stream->codecpar->channel_layout = AV_CH_LAYOUT_MONO;
-  audio_stream->codecpar->channels =
-      av_get_channel_layout_nb_channels(audio_stream->codecpar->channel_layout);
-  audioStreamIndex_ = audio_stream->index;
-  tylog("audio stream index=%d.", audioStreamIndex_);
+// Add audio stream
+AVStream *audio_stream = avformat_new_stream(uplinkFileCtx_, nullptr);
+if (!audio_stream) {
+  tylog("init uplinkFile fail, should not use assert :)");
+  assert(!"init uplinkFile fail, should not use assert :)");
+}
+audio_stream->codecpar->codec_id = AV_CODEC_ID_OPUS;
+audio_stream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
+audio_stream->codecpar->sample_rate = 48000;
+// OPT: use const or config
+audio_stream->codecpar->channel_layout = AV_CH_LAYOUT_MONO;
+audio_stream->codecpar->channels =
+    av_get_channel_layout_nb_channels(audio_stream->codecpar->channel_layout);
+audioStreamIndex_ = audio_stream->index;
+tylog("audio stream index=%d.", audioStreamIndex_);
 
-  // Open the output file
-  assert(!(uplinkFileCtx_->oformat->flags & AVFMT_NOFILE));
-  ret = avio_open(&uplinkFileCtx_->pb, uplinkFileCtx_->url, AVIO_FLAG_WRITE);
-  if (ret < 0) {
-    tylog("cannot open avio, url=%s, ret=%d[%s]", uplinkFileCtx_->url, ret,
-          av_err2string(ret));
+// Open the output file
+assert(!(uplinkFileCtx_->oformat->flags & AVFMT_NOFILE));
+ret = avio_open(&uplinkFileCtx_->pb, uplinkFileCtx_->url, AVIO_FLAG_WRITE);
+if (ret < 0) {
+  tylog("cannot open avio, url=%s, ret=%d[%s]", uplinkFileCtx_->url, ret,
+        av_err2string(ret));
 
-    // use goto error?
-    avformat_free_context(uplinkFileCtx_);
-    uplinkFileCtx_ = nullptr;
+  // use goto error?
+  avformat_free_context(uplinkFileCtx_);
+  uplinkFileCtx_ = nullptr;
 
-    assert(!"init uplinkFile fail, should not use assert :)");
-  }
+  assert(!"init uplinkFile fail, should not use assert :)");
+}
 
-  // Write the file header
-  ret = avformat_write_header(uplinkFileCtx_, nullptr);
-  if (ret < 0) {
-    tylog("write header ret=%d[%s]", ret, av_err2string(ret));
-    assert(!"init uplinkFile fail, should not use assert :)");
-  }
+// Write the file header
+ret = avformat_write_header(uplinkFileCtx_, nullptr);
+if (ret < 0) {
+  tylog("write header ret=%d[%s]", ret, av_err2string(ret));
+  assert(!"init uplinkFile fail, should not use assert :)");
+}
 */
 }
 
@@ -211,7 +214,8 @@ int RtpHandler::WriteWebmFile(const std::string &frame, uint32_t rtpTs,
 }
 
 // dump 264 or rtmp push
-int RtpHandler::DumpPacket(const std::vector<char> &packet) {
+int RtpHandler::DumpPacket(const std::vector<char> &packet,
+                           H264Unpacketizer &unpacker) {
   int ret = 0;
   const RtpHeader &rtpHeader =
       *reinterpret_cast<const RtpHeader *>(packet.data());
@@ -223,52 +227,88 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
       firstRtpVideoTs_ = rtpHeader.getTimestamp();
     }
 
-    std::vector<std::string> h264Frames;  // should with dts
-    const bool isvp8 = true;              // tmp
+    AVFrame *yuvFrame = nullptr;
+    const bool isvp8 = false;  // tmp
     if (isvp8) {
       ret = this->videoTranscoder_.VideoUnPackVp8RtpStm(
-          packet.data(), packet.size(), &h264Frames);
+          packet.data(), packet.size(), &yuvFrame);
       if (ret) {
         tylog("vp8 decode ret=%d.", ret);
 
         return ret;
       }
+      assert(nullptr != yuvFrame);
     } else {
-      /*
       std::vector<MediaData> media;
-      // ret = unpacker.Unpacketize(packet, &media);
+      ret = unpacker.Unpacketize(packet, &media);
       if (ret) {
         tylog("unpacketize rtp ret=%d", ret);
         return ret;
       }
-      for (MediaData &m : media) {
-        h264Frames.emplace_back(std::move(m.data_));
-        assert(m.data_.empty());
+
+      if (media.empty()) {
+        tylog("got no media data.");
+
+        return 0;
       }
-*/
+
+      assert(media.size() == 1);
+      const MediaData &m = media.front();
+
+      if (decoder == NULL) {
+        decoder = new CodecDecoder();
+        CodecParam Param;
+        Param.codecName = "h264";
+        if (!decoder->InitDecoder(Param)) {
+          tylog("InitDecoder failed");
+
+          return -2;
+        }
+      }
+      yuvFrame = decoder->Decode((uint8_t *)m.data_.data(), m.data_.size());
+      assert(nullptr != yuvFrame);
     }
 
-    /*
-    tylog("video h264 frames.size=%zu.", h264Frames.size());
-    assert(h264Frames.size() <= 1);  // tmp
-    for (const std::string &frame : h264Frames) {
-      // ret = unpacker.DumpRawStream(frame, rtpHeader.getSSRC());
-      if (ret) {
-        tylog("dump raw stream ret=%d", ret);
+    tylog("yum frame format=%s, height=%d, width=%d.",
+          AVPixelFormatToString(static_cast<AVPixelFormat>(yuvFrame->format))
+              .data(),
+          yuvFrame->height, yuvFrame->width);
+    const int kHeight = yuvFrame->height;
+    const int kWidth = yuvFrame->width;
 
-        return ret;
-      }
+    // Convert YUV frame to RGB
+    // Allocate output frame
+    AVFrame *pFrameRGB = av_frame_alloc();
+    pFrameRGB->width = kWidth;
+    pFrameRGB->height = kHeight;
+    pFrameRGB->format = AV_PIX_FMT_RGB32;
 
-      ret = this->belongingPeerConnection_.pushHandler_.SendVideoFrame(
-          std::vector<char>(frame.begin(), frame.end()),
-          (rtpHeader.getTimestamp() - firstRtpVideoTs_) / 90);
-      if (ret) {
-        tylog("push send video ret=%d", ret);
+    // Create SwsContext for color conversion
+    struct SwsContext *pImgConvertCtx = sws_getContext(
+        kWidth, kHeight, static_cast<AVPixelFormat>(yuvFrame->format), kWidth,
+        kHeight, static_cast<AVPixelFormat>(pFrameRGB->format), SWS_BILINEAR,
+        NULL, NULL, NULL);
 
-        return ret;
-      }
-    }
-*/
+    int numBytes =
+        av_image_get_buffer_size(AV_PIX_FMT_RGB32, kWidth, kHeight, 1);
+    uint8_t *pOutBuffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
+    av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, pOutBuffer,
+                         AV_PIX_FMT_RGB32, kWidth, kHeight, 1);
+    QImage tmpImg((uchar *)pOutBuffer, kWidth, kHeight, QImage::Format_RGB32);
+
+    sws_scale(pImgConvertCtx, (uint8_t const *const *)yuvFrame->data,
+              yuvFrame->linesize, 0, kHeight, pFrameRGB->data,
+              pFrameRGB->linesize);
+
+    //把这个RGB数据 用QImage加载
+    QImage image = tmpImg.copy();  //把图像复制一份 传递给界面显示
+    emit g_pPlayer->sig_GetOneFrame(image);  //发送信号
+
+    // 通常是栈序释放 RAII
+    av_free(pOutBuffer);
+    sws_freeContext(pImgConvertCtx);
+    av_frame_free(&pFrameRGB);
+
   } else {
     /*
     if (0 == firstRtpAudioTs_) {
@@ -316,12 +356,13 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet) {
     for (const SrsAudioFrame &outFrame : outFrames) {
       // to use string
 
-      // https://stackoverflow.com/questions/65013622/ffmpeg-encoding-aac-audio-encoded-file-can-not-be-played#comment115182982_65150073
+      //
+    https://stackoverflow.com/questions/65013622/ffmpeg-encoding-aac-audio-encoded-file-can-not-be-played#comment115182982_65150073
 
-      // https://wiki.multimedia.cx/index.php/MPEG-4_Audio#Channel_Configurations
-      int aac_profile = 2;            // AAC LC
-      int frequencey_index = 3;       // 48000 Hz
-      int channel_configuration = 2;  // stereo (left, right)
+      //
+    https://wiki.multimedia.cx/index.php/MPEG-4_Audio#Channel_Configurations int
+    aac_profile = 2;            // AAC LC int frequencey_index = 3;       //
+    48000 Hz int channel_configuration = 2;  // stereo (left, right)
 
       unsigned char adts_header[7];
       const int kADTSHeaderLen = sizeof adts_header;
@@ -444,7 +485,6 @@ int RtpHandler::SendToPeer_(RtpBizPacket &rtpBizPacket) {
 }
 
 int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
-
   int ret = 0;
 
   std::string mediaType =
@@ -466,8 +506,9 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
 
     DumpRecvPacket(vBufReceive);
 
-    // ret = belongingPeerConnection_.rtcpHandler_.HandleRtcpPacket(vBufReceive);
-    // if (ret) {
+    // ret =
+    // belongingPeerConnection_.rtcpHandler_.HandleRtcpPacket(vBufReceive); if
+    // (ret) {
     //   tylog("handleRtcpPacket fail, ret=%d", ret);
 
     //   return ret;
@@ -548,8 +589,12 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
         // case 2 recv old, but is last cycle
         if (ssrcInfo.biggestCycle <= 0) {
           // todo more logic, should return?
-          tylog("recv shit packet, ignore it=%s.", rtpHeader.ToString().data());
-          assert(!"should not reach here unless hacker attacks us, now we assert it");
+          tylog("recv shit packet(usually sender not browser, e.g. server)=%s.",
+                rtpHeader.ToString().data());
+          // web browser first seq is always AheadOf 0
+          // assert(!"should not reach here unless hacker attacks us, now we
+          // assert it");
+          itemCycle = 0;
         } else {
           itemCycle = ssrcInfo.biggestCycle - 1;  // notice
           tylog("recv old packet=%s. also old cycle",
@@ -597,15 +642,12 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
     tylog("pop jitter's OrderedPackets size=%zu", orderedPackets.size());
 
     for (RtpBizPacket &packet : orderedPackets) {
-      ret = DumpPacket(packet.rtpRawPacket);
+      ret = DumpPacket(packet.rtpRawPacket, ssrcInfo.h264Unpacketizer);
+      if (ret) {
+        tylog("dumpPacket ret=%d", ret);
 
-      // send to peer
-      // ret = SendToPeer_(packet);
-      // if (ret) {
-      //   tylog("send to peer ret=%d", ret);
-
-      //   return ret;
-      // }
+        return ret;
+      }
     }
   } else {
     tylog("receive unknown type of data=%s, return", mediaType.data());

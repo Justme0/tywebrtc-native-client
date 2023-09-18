@@ -18,6 +18,7 @@ SOURCES += \
     global_tmp/global_tmp.cc \
     pc/peer_connection.cc \
     rtp/pack_unpack/audio_to_rtp.cc \
+    rtp/pack_unpack/rtp_to_h264.cc \
     rtp/rtp_handler.cc \
     third_party/tylib/tylib/time/timer.cc \
     transport/receiver/receiver.cc \

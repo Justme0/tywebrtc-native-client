@@ -1,28 +1,28 @@
 ﻿#ifndef VIDEOPLAYER_H
 #define VIDEOPLAYER_H
 
-#include <QThread>
 #include <QImage>
+#include <QThread>
 
+class VideoPlayer : public QThread {
+  Q_OBJECT
 
-class VideoPlayer : public QThread
-{
-    Q_OBJECT
+ public:
+  explicit VideoPlayer() {}
+  ~VideoPlayer() {}
 
-public:
-    explicit VideoPlayer(){}
-    ~VideoPlayer(){}
+  void startPlay(QString url);
 
-    void startPlay(QString url);
+ signals:
+  void sig_GetOneFrame(QImage);  //每获取到一帧图像 就发送此信号
 
-signals:
-    void sig_GetOneFrame(QImage); //每获取到一帧图像 就发送此信号
+ protected:
+  void run();
 
-protected:
-    void run();
-
-private:
-    QString m_strFileName;
+ private:
+  QString m_strFileName;
 };
 
-#endif // VIDEOPLAYER_H
+extern VideoPlayer* g_pPlayer;
+
+#endif  // VIDEOPLAYER_H

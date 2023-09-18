@@ -16,9 +16,12 @@
 // #include "librtmp/rtmp.h"
 // #include "prometheus/family.h"
 // #include "prometheus/gauge.h"
+#include "log/log.h"
 #include "tylib/string/format_string.h"
 
-#include "log/log.h"
+extern "C" {
+#include "libavutil/pixfmt.h"
+}
 
 const int kUplossRateMul100 = 0;
 const int kDownlossRateMul100 = 0;
@@ -275,3 +278,20 @@ inline std::string RTMPToString(const RTMP& r) {
   av_make_error_string(                                               \
       static_cast<char*>(__builtin_alloca(AV_ERROR_MAX_STRING_SIZE)), \
       AV_ERROR_MAX_STRING_SIZE, errnum)
+
+inline std::string AVPixelFormatToString(AVPixelFormat fmt) {
+  switch (fmt) {
+    case AV_PIX_FMT_NONE:
+      return "AV_PIX_FMT_NONE";
+    case AV_PIX_FMT_YUV420P:
+      return "AV_PIX_FMT_YUV420P";
+    case AV_PIX_FMT_YUYV422:
+      return "AV_PIX_FMT_YUYV422";
+    case AV_PIX_FMT_RGB24:
+      return "AV_PIX_FMT_RGB24";
+    case AV_PIX_FMT_BGR24:
+      return "AV_PIX_FMT_BGR24";
+    default:
+      return std::to_string(fmt);
+  }
+}
