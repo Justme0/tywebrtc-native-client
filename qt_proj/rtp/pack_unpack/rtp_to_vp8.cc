@@ -331,14 +331,14 @@ int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(
       }
     }
 
-    ret = this->belongingRtpHandler_.WriteWebmFile(
-        {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
-        kMediaTypeVideo, is_key_frame);
-    if (ret) {
-      tylog("write webm video file ret=%d.", ret);
+    // ret = this->belongingRtpHandler_.WriteWebmFile(
+    //     {m_Vp8RawData, m_Vp8RawData + m_RawDataLen}, pRtp->getTimestamp(),
+    //     kMediaTypeVideo, is_key_frame);
+    // if (ret) {
+    //   tylog("write webm video file ret=%d.", ret);
 
-      return ret;
-    }
+    //   return ret;
+    // }
 
     AVFrame* yuvFrame = decoder->Decode((uint8_t*)m_Vp8RawData, m_RawDataLen);
     bool ChangeResolution = false;
