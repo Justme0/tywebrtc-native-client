@@ -1,4 +1,5 @@
 ﻿#include "mainwindow.h"
+
 #include <QInputDialog>
 #include <QPainter>
 #include <QThread>
