@@ -55,7 +55,7 @@ enum enVideoH264NaluType {
   kVideoNaluUnitDelimiterRbsp = 9,
   kVideoNaluUnitEoseq = 10,
   kVideoNaluUnitEostm = 11,
-  kVideoNaluUnitFilter = 12,
+  kVideoNaluUnitFillerData = 12,
   kVideoNaluUnitSpsExtn = 13,
   kH264StapA = 24,
   kH264FuA = 28,
@@ -87,7 +87,7 @@ inline std::string enVideoH264NaluTypeToString(enVideoH264NaluType v) {
       return "NAL unit - End of sequence";
     case kVideoNaluUnitEostm:
       return "NAL unit - End of stream";
-    case kVideoNaluUnitFilter:
+    case kVideoNaluUnitFillerData:
       return "NAL unit - Filler data";
     case kVideoNaluUnitSpsExtn:
       return "NAL unit - Sequence parameter set extension";
