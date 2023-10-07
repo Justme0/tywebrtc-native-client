@@ -38,7 +38,7 @@ inline std::string PowerSeqToString(PowerSeqT powerSeq) {
   return tylib::AnyToString(SplitPowerSeq(powerSeq));
 }
 
-#define VIDEO_RTP_EXTERN_NAME_LEN (2)   // 扩展位名字
+#define VIDEO_RTP_EXTERN_NAME_LEN (2)  // 扩展位名字
 #define VIDEO_RTP_EXTERN_VALUE_LEN (4)  // 扩展数据长度单位为4个字节
 #define VIDEO_RTP_EXTERN_LEN_VALUE_LEN (2)  // 扩展数据长度占据2字节
 

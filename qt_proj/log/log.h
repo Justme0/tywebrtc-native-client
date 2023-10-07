@@ -9,7 +9,8 @@
 #define STRIP_FILENAME(x) strrchr(x, '/') ? strrchr(x, '/') + 1 : x
 #endif
 
-#define tylog(format, arg...)                                  \
-  qDebug("%s %s %d %s " format,                                \
-         tylib::MilliSecondToLocalTimeString(g_now_ms).data(), \
+#define tylog(format, arg...)                                                \
+  qDebug("%s %s %d %s " format,                                              \
+         (g_now.ComputeNow(),                                                \
+          tylib::MicroSecondToLocalTimeString(g_now.MicroSeconds()).data()), \
          STRIP_FILENAME(__FILE__), __LINE__, __FUNCTION__, ##arg)

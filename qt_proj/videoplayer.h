@@ -20,7 +20,7 @@ class VideoPlayer : public QThread {
   void run();
 
  private:
-  QString m_strFileName;
+  QString m_strFileName;  // no use
 };
 
 extern VideoPlayer* g_pPlayer;

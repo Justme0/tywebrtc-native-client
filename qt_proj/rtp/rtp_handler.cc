@@ -252,6 +252,10 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet,
         return 0;
       }
 
+      if (media.size() >= 2) {
+        tylog("media size=%zu.", media.size());
+      }
+
       assert(media.size() == 1);
       const MediaData &m = media.front();
 
@@ -266,7 +270,11 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet,
         }
       }
       yuvFrame = decoder->Decode((uint8_t *)m.data_.data(), m.data_.size());
-      assert(nullptr != yuvFrame);
+      if (nullptr == yuvFrame) {
+        tylog("decode vp8, recv null yuvFrame.");
+
+        return -3;
+      }
     }
 
     tylog("yum frame format=%s, height=%d, width=%d.",
@@ -308,7 +316,6 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet,
     av_free(pOutBuffer);
     sws_freeContext(pImgConvertCtx);
     av_frame_free(&pFrameRGB);
-
   } else {
     /*
     if (0 == firstRtpAudioTs_) {

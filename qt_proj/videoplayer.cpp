@@ -40,19 +40,22 @@ class UdpServer : public QThread {
     while (udpSocket_->hasPendingDatagrams()) {
       //调整缓冲区的大小和收到的数据大小一致
       arr.resize(udpSocket_->bytesAvailable());
+      tylog("udpSocket_->bytesAvailable=%d.", udpSocket_->bytesAvailable());
 
       //接收数据
-      udpSocket_->readDatagram(arr.data(), arr.size(), &addr, &port);
+      int realLen =
+          udpSocket_->readDatagram(arr.data(), arr.size(), &addr, &port);
+      tylog("realLen=%d.", realLen);
       //显示
       // QString my_formatted_string = QString("%1/%2-%3.txt").arg("~", 2232,
       // "Jane");
 
-      tylog("recv from %s:%d, size=%d.", addr.toString().toStdString().data(),
-            port, arr.size());
+      tylog("================== recv from %s:%d, size=%d ==================",
+            addr.toString().toStdString().data(), port, realLen);
 
       static PeerConnection pc(addr.toString().toStdString(), (int)port);
 
-      pc.HandlePacket(std::vector<char>(arr.begin(), arr.end()));
+      pc.HandlePacket(std::vector<char>(arr.begin(), arr.begin() + realLen));
     }
     tylog("exit while reading");
   }

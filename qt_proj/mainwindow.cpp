@@ -44,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
       "R3a4t9zfksDJmv56txp7R0*TbIEWdD9tfd23vuIbw-AQAA---IVDJ0&use_number_room_"
       "id=1&remoteuserid=taylorobs";
   ui->lineEditUrl->setText(m_strUrl);
+
+  g_pPlayer->startPlay("");
 }
 
 MainWindow::~MainWindow() { delete ui; }

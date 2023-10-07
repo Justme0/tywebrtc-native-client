@@ -175,6 +175,8 @@ int H264Unpacketizer::ParseFuaNalu_(const std::vector<char> &vBufReceive) {
   return 0;
 }
 
+// from
+// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/modules/rtp_rtcp/source/video_rtp_depacketizer_h264.cc?q=%22Buffer%20doesn%27t%20contain%20room%20for%20additional%20nalu%20length.%22
 int H264Unpacketizer::ParseStapAStartOffsets_(const char *nalu_ptr,
                                               int length_remaining,
                                               std::vector<size_t> *offsets) {
