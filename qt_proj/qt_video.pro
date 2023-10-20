@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui core5compat network
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,9 +20,9 @@ SOURCES += \
     rtp/pack_unpack/audio_to_rtp.cc \
     rtp/pack_unpack/rtp_to_h264.cc \
     rtp/rtp_handler.cc \
-    third_party/tylib/tylib/time/timer.cc \
     transport/receiver/receiver.cc \
-    rtp/pack_unpack/rtp_to_vp8.cc
+    rtp/pack_unpack/rtp_to_vp8.cc \
+    third_party/tylib/tylib/time/timer.cc
 
 HEADERS  += \
     *.h \
