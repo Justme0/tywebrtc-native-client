@@ -3,7 +3,7 @@
 #include "tylib/time/time_util.h"
 #include "tylib/time/timer.h"
 
-#if (_WIN32 || WIN64)
+#if _WIN32
 #define STRIP_FILENAME(x) strrchr(x, '\\') ? strrchr(x, '\\') + 1 : x
 #else
 #define STRIP_FILENAME(x) strrchr(x, '/') ? strrchr(x, '/') + 1 : x
