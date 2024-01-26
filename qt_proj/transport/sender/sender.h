@@ -6,7 +6,7 @@
 
 #include "rtp/rtp_parser.h"
 
-class SSRCInfo;
+struct SSRCInfo;
 
 // audio should not in pacing
 class RtpSender {

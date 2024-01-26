@@ -42,10 +42,11 @@ FORMS    += \
 
 
 macx {
-INCLUDEPATH += /opt/homebrew/Cellar/ffmpeg/6.0_1/include \
+
+INCLUDEPATH += /opt/homebrew/include \
         $$PWD/third_party/tylib
 
-LIBS += -L /opt/homebrew/Cellar/ffmpeg/6.0_1/lib \
+LIBS += -L /opt/homebrew/lib \
         -lavcodec \
         -lavdevice \
         -lavfilter \

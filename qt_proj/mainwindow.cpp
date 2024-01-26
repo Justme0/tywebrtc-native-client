@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect(g_pPlayer, SIGNAL(sig_GetOneFrame(QImage)), this,
           SLOT(slotGetOneFrame(QImage)));
 
-  ui->lineEditUrl->setText("not used");
+  ui->lineEditUrl->setText("");
 
   g_pPlayer->startPlay("");
 }

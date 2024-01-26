@@ -6,7 +6,7 @@
 
 #include "rtp/rtp_parser.h"
 
-class SSRCInfo;
+struct SSRCInfo;
 
 const PowerSeqT kShitRecvPowerSeqInitValue = -1;
 
