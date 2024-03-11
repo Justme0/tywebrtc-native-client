@@ -534,7 +534,8 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
     //   return ret;
     // }
     DumpRecvPacket(vBufReceive);
-    tylog("after unprotect, paddinglen=%d", getRtpPaddingLength(vBufReceive));
+    tylog("after unprotect (qt have no srtp), paddinglen=%d",
+          getRtpPaddingLength(vBufReceive));
 
     const RtpHeader &rtpHeader =
         *reinterpret_cast<const RtpHeader *>(vBufReceive.data());
@@ -543,7 +544,12 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
     if (mediaType == kMediaTypeAudio) {
       this->upAudioSSRC = rtpHeader.getSSRC();
     } else if (mediaType == kMediaTypeVideo) {
-      this->upVideoSSRC = rtpHeader.getSSRC();
+      if (rtpHeader.getSSRC() == kDownlinkVideoFecSsrc) {
+        tylog("is fec pkt");
+        return 0;
+      } else {
+        this->upVideoSSRC = rtpHeader.getSSRC();
+      }
     }
 
     // Constructing a value SSRCInfo is expensive, so we should not insert

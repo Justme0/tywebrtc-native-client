@@ -41,6 +41,8 @@ const int kDownlinkAudioPayloadType = 111;
 const constexpr int kDownlinkVideoSsrc = 33697348;  // taylor to make dynamic
 const int kDownlinkH264PayloadType = 106;
 
+const int kDownlinkVideoFecSsrc = 13697341;  // taylor to make dynamic
+
 class PeerConnection;
 
 // TODO: should save to remote DB ? must refactor! Now we use singleton
