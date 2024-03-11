@@ -3,7 +3,7 @@
 #ifndef RTP_RTP_PARSER_H_
 #define RTP_RTP_PARSER_H_
 
-#if _WIN32
+#if defined(Q_OS_WIN)
 #include "winsock.h"
 #endif
 
@@ -527,7 +527,7 @@ static inline void rtp_write_uint32(uint8_t* ptr, uint32_t val) {
 // |                        header extension                       |
 // |                             ....                              |
 
-#if _WIN32
+#if defined(Q_OS_WIN)
 #include "winsock.h"
 #endif
 

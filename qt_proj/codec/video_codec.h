@@ -1,25 +1,11 @@
 #ifndef RTMP_VIDEO_CODEC_H_
 #define RTMP_VIDEO_CODEC_H_
 
-#ifdef __cplusplus
-
-#define __STDC_CONSTANT_MACROS
-
-#ifdef _STDINT_H
-#undef _STDINT_H
-#endif
-
-#include <stdint.h>
 extern "C" {
-#endif
-
 #include <libavcodec/avcodec.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-
-#ifdef __cplusplus
-};
-#endif
+}
 
 struct CodecParam {
   int bitRate;
