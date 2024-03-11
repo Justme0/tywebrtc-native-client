@@ -1,7 +1,9 @@
 #ifndef RTP_RTCP_RTCP_PARSER_H_
 #define RTP_RTCP_RTCP_PARSER_H_
 
+#if defined(Q_OS_WIN)
 #include <winsock.h>
+#endif
 
 #include <cstdint>
 
