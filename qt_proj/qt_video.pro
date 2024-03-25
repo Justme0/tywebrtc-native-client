@@ -11,6 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # TARGET = rtspPlayer
 TEMPLATE = app
 
+QMAKE_CXXFLAGS += -std=c++20
 
 SOURCES += \
     *.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
     rtp/rtp_handler.cc \
     transport/receiver/receiver.cc \
     rtp/pack_unpack/rtp_to_vp8.cc \
+    third_party/rsfec-cpp/rsfec/rsfec.cc \
     third_party/tylib/tylib/time/timer.cc
 
 HEADERS  += \
@@ -32,6 +34,7 @@ HEADERS  += \
     pc/*.h \
     rtp/pack_unpack/*.h \
     rtp/rtcp/*.h \
+    third_party/rsfec-cpp/rsfec/*.h \
     third_party/tylib/tylib/time/*.h \
     transport/receiver/*.h \
     transport/sender/*.h \
@@ -44,6 +47,7 @@ FORMS    += \
 macx {
 
 INCLUDEPATH += /opt/homebrew/include \
+        $$PWD/third_party/rsfec-cpp \
         $$PWD/third_party/tylib
 
 LIBS += -L /opt/homebrew/lib \
@@ -57,6 +61,7 @@ LIBS += -L /opt/homebrew/lib \
         -lswresample
 } win32 {
 INCLUDEPATH+=$$PWD/third_party/ffmpeg/include \
+        $$PWD/third_party/rsfec-cpp \
         $$PWD/third_party/tylib
 
 LIBS += $$PWD/third_party/ffmpeg/lib/avcodec.lib \

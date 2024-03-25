@@ -702,6 +702,17 @@ class RtpHeader {
     return "";
   }
 
+  // if header ext exists, return value is the address of header ext struct.
+  // Otherwise undefined behavior, this function danger!
+  const RtpFixedHeaderExt* getHeaderExt() const {
+    return reinterpret_cast<const RtpFixedHeaderExt*>(
+        reinterpret_cast<const uint8_t*>(this) + kRtpHeaderLenByte + cc * 4);
+  }
+
+  bool isFEC() const {
+    return getSSRC() == kDownlinkVideoSsrc && getPayloadType() == kDownlinkVideoFecPayloadType;
+  }
+
   std::string ToString() const {
     return tylib::format_string(
         "{CSRC count=%d, has ext=%d, has padding=%d, version=%d, "
@@ -710,13 +721,6 @@ class RtpHeader {
         getCc(), getExtension(), hasPadding(), getVersion(), getPayloadType(),
         getMarker(), getSeqNumber(), getTimestamp(), getSSRC(), getSSRC(),
         getHeaderLength());
-  }
-
-  // if header ext exists, return value is the address of header ext struct.
-  // Otherwise undefined behavior, this function danger!
-  const RtpFixedHeaderExt* getHeaderExt() const {
-    return reinterpret_cast<const RtpFixedHeaderExt*>(
-        reinterpret_cast<const uint8_t*>(this) + kRtpHeaderLenByte + cc * 4);
   }
 
  private:

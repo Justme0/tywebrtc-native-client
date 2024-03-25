@@ -1,29 +1,113 @@
 #include "transport/receiver/receiver.h"
 
 #include <cassert>
+#include <ranges>
+
+#include "tylib/time/timer.h"
+#include "rsfec/rsfec.h"
 
 #include "pc/peer_connection.h"
 // #include "rtp/rtcp/rtcp_nack.h"
 #include "rtp/rtp_handler.h"
-#include "tylib/time/timer.h"
 
 RtpReceiver::RtpReceiver(SSRCInfo& ssrcInfo) : belongingSSRCInfo_(ssrcInfo) {}
 
 // TODO: do NACK
-void RtpReceiver::PushToJitter(RtpBizPacket&& rtpBizPacket) {
+// void RtpReceiver::PushToJitter(RtpBizPacket&& rtpBizPacket) {
+//   rtpBizPacket.enterJitterTimeMs = g_now_ms;
+//   jitterBuffer_.emplace(rtpBizPacket.GetPowerSeq(), std::move(rtpBizPacket));
+//   assert(rtpBizPacket.rtpRawPacket.empty());
+// }
+
+const std::string kAllComplete = "AllComplete";
+const std::string kNotCompleteCanRecover = "NotCompleteCanRecover";
+const std::string kNotCompleteCannotRecover = "NotCompleteCannotRecover";
+
+// 1, data is all complete, no need recover
+// 2, data is not complete, but can recover
+// 3, data is not complete, connot recover
+std::string RtpReceiver::shoudDoDecodeFEC(const std::map<PowerSeqT, RtpBizPacket> &group) {
+  assert(!group.empty());
+
+  int recvFecNum{};
+  int recvDataNum{};
+  int expectDataNum{};
+
+  // PowerSeqT expectSeq = this->lastPoppedPowerSeq_ == kShitRecvPowerSeqInitValue ? group->begin()->first : this->lastPoppedPowerSeq_ + 1;
+  for (auto it = group.begin(); it != group.end(); ++it) {
+    const RtpHeader& rtp = *reinterpret_cast<const RtpHeader*>(it->second.rtpRawPacket.data());
+    if (rtp.isFEC()) {
+      ++recvFecNum;
+    } else {
+      ++recvDataNum;
+    }
+  }
+
+}
+
+// @brief io_group [in & out] is a group of data and FEC
+void RtpReceiver::TryRecoverFEC(std::map<PowerSeqT, RtpBizPacket> *io_group) {
+
+  for (auto const& [seq, pkt] : *io_group | std::views::reverse) {
+    tylog("seq=%lld, pkt=%s.", seq, pkt.ToString().data());
+  }
+
+  rsfec::CRSFec fec;
+  int ret = fec.SetNM(1, 1);
+  if (ret) {
+    return;
+  }
+
+}
+
+std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
   rtpBizPacket.enterJitterTimeMs = g_now_ms;
-  jitterBuffer_.emplace(rtpBizPacket.GetPowerSeq(), std::move(rtpBizPacket));
-  assert(rtpBizPacket.rtpRawPacket.empty());
+
+  const RtpHeader& rtp =
+      *reinterpret_cast<const RtpHeader*>(rtpBizPacket.rtpRawPacket.data());
+  // only for test FEC, fec pkt may lost !!!
+  // OPT: cooperate with NACK
+  if (rtp.isFEC() && rtp.getMarker() == 1) {
+    std::map<PowerSeqT, RtpBizPacket> groupBeforeRecover;
+    for (auto it = jitterBuffer_.begin();
+         it != jitterBuffer_.end() && it->first < rtpBizPacket.GetPowerSeq();) {
+      tylog("pop from jitter rtp=%s.", it->second.ToString().data());
+
+      groupBeforeRecover.emplace(it->first, std::move(it->second));
+      assert(it->second.rtpRawPacket.empty());
+
+      it = jitterBuffer_.erase(it);
+    }
+    groupBeforeRecover.emplace(rtpBizPacket.GetPowerSeq(),  std::move(rtpBizPacket) );
+
+    tylog("now jitter=%s.", ToString().data());
+    assert(rtpBizPacket.rtpRawPacket.empty());
+
+    TryRecoverFEC(&groupBeforeRecover);
+
+    std::vector<RtpBizPacket> recoveredGroup;
+    for (auto & [_, pkt] : groupBeforeRecover) {
+      recoveredGroup.emplace_back(std::move(pkt));
+    }
+
+    return recoveredGroup;
+  } else {
+    jitterBuffer_.emplace(rtpBizPacket.GetPowerSeq(), std::move(rtpBizPacket));
+    assert(rtpBizPacket.rtpRawPacket.empty());
+
+    return {};
+  }
 }
 
 int RtpReceiver::GetJitterSize() const { return jitterBuffer_.size(); }
 
 std::string RtpReceiver::ToString() const {
-  return tylib::format_string("{jitterSize=%zu, lastPowerSeq=%s}",
+  return tylib::format_string("{jitterSize=%zu, lastPoppedPowerSeq_=%s}",
                               jitterBuffer_.size(),
                               PowerSeqToString(lastPoppedPowerSeq_).data());
 }
 
+/*
 // OPT: use not wait stategy
 std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
   std::vector<RtpBizPacket> orderedPackets;
@@ -61,10 +145,10 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
   const RtpBizPacket& firstPacket = jitterBuffer_.begin()->second;
   const RtpHeader& firstRtpHeader =
       *reinterpret_cast<const RtpHeader*>(firstPacket.rtpRawPacket.data());
-  const bool bAudioType = firstRtpHeader.GetMediaType() == kMediaTypeAudio;
+  // const bool bAudioType = firstRtpHeader.GetMediaType() == kMediaTypeAudio;
   tylog(
       "jitter detect out-of-order or lost, cannot out packets, last out "
-      "packet powerSeq=%ld[%s], jitter.size=%zu, jitter first rtp=%s.",
+      "packet powerSeq=%" PRId64 "[%s], jitter.size=%zu, jitter first rtp=%s.",
       lastPoppedPowerSeq_, PowerSeqToString(lastPoppedPowerSeq_).data(),
       jitterBuffer_.size(), firstPacket.ToString().data());
 
@@ -150,10 +234,10 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
     tylog("createPLIReportSend ret=%d", ret);
     // not return
   }
-*/
 
   jitterBuffer_.clear();
   lastPoppedPowerSeq_ = kShitRecvPowerSeqInitValue;
 
   return {};
 }
+*/

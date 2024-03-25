@@ -14,9 +14,13 @@ class RtpReceiver {
  public:
   explicit RtpReceiver(SSRCInfo& ssrcInfo);
 
-  void PushToJitter(RtpBizPacket&& rtpBizPacket);
-  std::vector<RtpBizPacket> PopOrderedPackets();
+  // void PushToJitter(RtpBizPacket&& rtpBizPacket);
+  // std::vector<RtpBizPacket> PopOrderedPackets();
+  // std::vector<RtpBizPacket> PopOrderedPacketsV2() ;
+  std::vector<RtpBizPacket> PushAndPop(RtpBizPacket&& rtpBizPacket);
   int GetJitterSize() const;
+
+  void TryRecoverFEC(std::map<PowerSeqT, RtpBizPacket> *io_group);
 
   std::string ToString() const;
 
