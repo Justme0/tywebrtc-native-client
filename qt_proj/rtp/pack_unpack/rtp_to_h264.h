@@ -73,22 +73,22 @@ struct FrameBuffer {
 };
 
 struct VideoUnPackParam {
-  uint32_t pre_fu_valid = 0;
-  uint16_t cur_rtp_seq_no = 0xFFFF;
-  uint32_t pre_seq_num = 0xFFFFFFFF;
-  std::string raw_stm_buff;
-  int32_t raw_stm_size = 0;
-  uint32_t cur_frame_ts = 0;
-  VideoRotation rotate_angle = kVideoRotation0;
-  uint8_t cam_type = 0;
-  uint16_t max_play_out_delay_ms = 0;
-  uint16_t min_play_out_delay_ms = 0;
+  // uint32_t pre_fu_valid = 0;
+  // uint16_t cur_rtp_seq_no = 0xFFFF;
+  // uint32_t pre_seq_num = 0xFFFFFFFF;
+  // std::string raw_stm_buff;
+  // int32_t raw_stm_size = 0;
+  // uint32_t cur_frame_ts = 0;
+  // VideoRotation rotate_angle = kVideoRotation0;
+  // uint8_t cam_type = 0;
+  // uint16_t max_play_out_delay_ms = 0;
+  // uint16_t min_play_out_delay_ms = 0;
   std::string pps;
   std::string sps;
-  uint8_t wait_i_frame_flag = 0;
-  uint32_t ssrc = 0;
-  uint32_t payload_type = 0;
-  uint8_t drop_flag = 0;
+  // uint8_t wait_i_frame_flag = 0;
+  // uint32_t ssrc = 0;
+  // uint32_t payload_type = 0;
+  // uint8_t drop_flag = 0;
 };
 
 class H264Unpacketizer {

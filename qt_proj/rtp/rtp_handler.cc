@@ -213,7 +213,7 @@ int RtpHandler::WriteWebmFile(const std::string &frame, uint32_t rtpTs,
   return 0;
 }
 
-// dump 264 or rtmp push
+// dump pkt and render YUV(RGB)
 int RtpHandler::DumpPacket(const std::vector<char> &packet,
                            H264Unpacketizer &unpacker) {
   int ret = 0;
@@ -544,9 +544,8 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
     if (mediaType == kMediaTypeAudio) {
       this->upAudioSSRC = rtpHeader.getSSRC();
     } else if (mediaType == kMediaTypeVideo) {
-      if (rtpHeader.getSSRC() == kDownlinkVideoFecSsrc) {
-        tylog("is fec pkt");
-        return 0;
+      if (rtpHeader.isFEC()) {
+        tylog("recv fec pkt");
       } else {
         this->upVideoSSRC = rtpHeader.getSSRC();
       }
@@ -645,12 +644,8 @@ int RtpHandler::HandleRtpPacket(const std::vector<char> &vBufReceive) {
       return 0;
     }
 
-    ssrcInfo.rtpReceiver.PushToJitter(std::move(rtpBizPacket));
-
-    assert(rtpBizPacket.rtpRawPacket.empty());
-
     std::vector<RtpBizPacket> orderedPackets =
-        ssrcInfo.rtpReceiver.PopOrderedPackets();
+        ssrcInfo.rtpReceiver.PushAndPop(std::move(rtpBizPacket));
 
     tylog("pop jitter's OrderedPackets size=%zu", orderedPackets.size());
 

@@ -38,7 +38,7 @@ inline std::string PowerSeqToString(PowerSeqT powerSeq) {
   return tylib::AnyToString(SplitPowerSeq(powerSeq));
 }
 
-#define VIDEO_RTP_EXTERN_NAME_LEN (2)   // 扩展位名字
+#define VIDEO_RTP_EXTERN_NAME_LEN (2)  // 扩展位名字
 #define VIDEO_RTP_EXTERN_VALUE_LEN (4)  // 扩展数据长度单位为4个字节
 #define VIDEO_RTP_EXTERN_LEN_VALUE_LEN (2)  // 扩展数据长度占据2字节
 
@@ -54,12 +54,13 @@ inline typename std::enable_if<(M == 0), T>::type ForwardDiff(T a, T b) {
   return b - a;
 }
 
+// @return "b - a"
 template <typename T>
 inline T ForwardDiff(T a, T b) {
   return ForwardDiff<T, 0>(a, b);
 }
 
-// @return if "a > b"
+// @return if "a >= b"
 template <typename T, T M>
 inline typename std::enable_if<(M == 0), bool>::type AheadOrAt(T a, T b) {
   static_assert(std::is_unsigned<T>::value,
@@ -69,6 +70,7 @@ inline typename std::enable_if<(M == 0), bool>::type AheadOrAt(T a, T b) {
   return ForwardDiff(b, a) < maxDist;  // 0 < a-b < maxDist
 }
 
+// @return if "a >= b"
 template <typename T>
 inline bool AheadOrAt(T a, T b) {
   return AheadOrAt<T, 0>(a, b);
@@ -702,6 +704,18 @@ class RtpHeader {
     return "";
   }
 
+  // if header ext exists, return value is the address of header ext struct.
+  // Otherwise undefined behavior, this function danger!
+  const RtpFixedHeaderExt* getHeaderExt() const {
+    return reinterpret_cast<const RtpFixedHeaderExt*>(
+        reinterpret_cast<const uint8_t*>(this) + kRtpHeaderLenByte + cc * 4);
+  }
+
+  bool isFEC() const {
+    return getSSRC() == kDownlinkVideoSsrc &&
+           getPayloadType() == kDownlinkVideoFecPayloadType;
+  }
+
   std::string ToString() const {
     return tylib::format_string(
         "{CSRC count=%d, has ext=%d, has padding=%d, version=%d, "
@@ -710,13 +724,6 @@ class RtpHeader {
         getCc(), getExtension(), hasPadding(), getVersion(), getPayloadType(),
         getMarker(), getSeqNumber(), getTimestamp(), getSSRC(), getSSRC(),
         getHeaderLength());
-  }
-
-  // if header ext exists, return value is the address of header ext struct.
-  // Otherwise undefined behavior, this function danger!
-  const RtpFixedHeaderExt* getHeaderExt() const {
-    return reinterpret_cast<const RtpFixedHeaderExt*>(
-        reinterpret_cast<const uint8_t*>(this) + kRtpHeaderLenByte + cc * 4);
   }
 
  private:
@@ -748,38 +755,18 @@ struct RtpBizPacket {
   RtpBizPacket(std::vector<char>&& rtpRawPacket, int64_t cycle)
       : rtpRawPacket(std::move(rtpRawPacket)), cycle(cycle) {}
 
+  // https://stackoverflow.com/questions/18290523/is-a-default-move-constructor-equivalent-to-a-member-wise-move-constructor
   // https://learn.microsoft.com/en-us/cpp/cpp/move-constructors-and-move-assignment-operators-cpp?view=msvc-170
-  RtpBizPacket(RtpBizPacket&& other) { *this = std::move(other); }
+  RtpBizPacket(RtpBizPacket&& other) = default;
 
-  RtpBizPacket& operator=(RtpBizPacket&& other) {
-    if (this != &other) {
-      rtpRawPacket = std::move(other.rtpRawPacket);
-      cycle = other.cycle;
-      enterJitterTimeMs = other.enterJitterTimeMs;
-    }
-
-    return *this;
-  }
+  RtpBizPacket& operator=(RtpBizPacket&& other) = default;
 
   bool operator<(const RtpBizPacket& other) const {
     return this->GetPowerSeq() < other.GetPowerSeq();
   }
 
   PowerSeqT GetPowerSeq() const {
-    return (cycle << 16) |
-           reinterpret_cast<const RtpHeader*>(rtpRawPacket.data())
-               ->getSeqNumber();
-  }
-
-  std::string ToString() const {
-    assert(!rtpRawPacket.empty());
-    return tylib::format_string(
-        "{rtp=%s, cycle=%ld, enterTs=%s, waitMs=%ld}",
-        reinterpret_cast<const RtpHeader*>(rtpRawPacket.data())
-            ->ToString()
-            .data(),
-        cycle, tylib::MilliSecondToLocalTimeString(enterJitterTimeMs).data(),
-        WaitTimeMs());
+    return (cycle << 16) | GetRtpHeaderRef().getSeqNumber();
   }
 
   // from enter jitter to now duration
@@ -788,6 +775,24 @@ struct RtpBizPacket {
     return 0;
   }
 
+  RtpHeader& GetRtpHeaderRef() {
+    return *reinterpret_cast<RtpHeader*>(rtpRawPacket.data());
+  }
+
+  const RtpHeader& GetRtpHeaderRef() const {
+    return *reinterpret_cast<const RtpHeader*>(rtpRawPacket.data());
+  }
+
+  std::string ToString() const {
+    assert(!rtpRawPacket.empty());
+    return tylib::format_string(
+        "{rtp=[%zu B]%s, cycle=%ld, enterTs=%s, waitMs=%ld}",
+        rtpRawPacket.size(), GetRtpHeaderRef().ToString().data(), cycle,
+        tylib::MilliSecondToLocalTimeString(enterJitterTimeMs).data(),
+        WaitTimeMs());
+  }
+
+ public:
   // when add new member, must modify constructor, ToString(), etc.
   std::vector<char> rtpRawPacket;
   int64_t cycle = 0;

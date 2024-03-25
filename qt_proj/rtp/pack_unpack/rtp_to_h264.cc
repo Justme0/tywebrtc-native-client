@@ -381,7 +381,8 @@ int H264Unpacketizer::Unpacketize(const std::vector<char> &vBufReceive,
 
   if (expect_seq_num_ != rtpHeader.getSeqNumber()) {
     tylog(
-        "NOTE: find lost pkt(%d), last pkt(%d), have fus, buf still not find "
+        "NOTE: find lost pkt, current pkt seq=%d, expect_seq_num=%d, have fus, "
+        "buf still not find "
         "fu-end!",
         rtpHeader.getSeqNumber(), expect_seq_num_);
 
@@ -389,13 +390,13 @@ int H264Unpacketizer::Unpacketize(const std::vector<char> &vBufReceive,
     frame_buffer_.frames.clear();
     // return frames;
   }
+  // update expected seq for next input
   expect_seq_num_ = rtpHeader.getSeqNumber() + 1;
 
   // status_.in_buf_cnt++; // just for monitor
   // VideoUnPackCheckLost(rtp_data, rtp_len, lost_pkt_cnt);
-
-  unpack_params_.cur_rtp_seq_no =
-      (unpack_params_.cur_rtp_seq_no + lost_pkt_cnt) & 0x00FFFF;
+  // unpack_params_.cur_rtp_seq_no = (unpack_params_.cur_rtp_seq_no +
+  // lost_pkt_cnt) & 0x00FFFF;
 
   // 发现webrtc收到全padding的数据，此数据非264数据，丢弃
   if (static_cast<int>(vBufReceive.size()) <=

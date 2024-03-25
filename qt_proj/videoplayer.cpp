@@ -17,9 +17,14 @@ extern "C" {
 class UdpServer : public QThread {
  public:
   UdpServer() {
-    udpSocket_ = new QUdpSocket();
+    udpSocket_ = new QUdpSocket(this);
 
-    bool result = udpSocket_->bind(QHostAddress::AnyIPv4);
+    qint64 bufferByte = 64 * 1024 * 1024;
+
+    udpSocket_->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption,
+                                bufferByte);
+
+    bool result = udpSocket_->bind(QHostAddress::Any);
     if (result) {
       tylog("Socket bind ok");
     } else {
@@ -27,35 +32,51 @@ class UdpServer : public QThread {
       assert(!"shit");
     }
 
-    connect(udpSocket_, &QUdpSocket::readyRead, this,
-            &UdpServer::readPendingDatagrams);
+    bool ok = connect(udpSocket_, &QUdpSocket::readyRead, this,
+                      &UdpServer::readPendingDatagrams);
+    if (!ok) {
+      assert(!"connect not ok :( , bye");
+    }
+
+    ok = connect(udpSocket_, &QUdpSocket::errorOccurred, this,
+                 &UdpServer::onError);
+    if (!ok) {
+      assert(!"connect not ok :( , bye");
+    }
+  }
+
+  void onError(QAbstractSocket::SocketError socketError) {
+    tylog("udp socket err=%d.", socketError);
+    assert(!"connect recv error :( , bye");
   }
 
   void readPendingDatagrams() {
-    QHostAddress addr;  //用于获取发送者的 IP 和端口
-    quint16 port;
-
-    //数据缓冲区
-    QByteArray arr;
     while (udpSocket_->hasPendingDatagrams()) {
-      //调整缓冲区的大小和收到的数据大小一致
-      arr.resize(udpSocket_->bytesAvailable());
-      tylog("udpSocket_->bytesAvailable=%d.", udpSocket_->bytesAvailable());
+      tylog("udpSocket_->bytesAvailable=%" PRId64
+            ", first pending datagram size=%" PRId64 ".",
+            udpSocket_->bytesAvailable(), udpSocket_->pendingDatagramSize());
 
-      //接收数据
-      int realLen =
-          udpSocket_->readDatagram(arr.data(), arr.size(), &addr, &port);
-      tylog("realLen=%d.", realLen);
-      //显示
-      // QString my_formatted_string = QString("%1/%2-%3.txt").arg("~", 2232,
-      // "Jane");
+      QNetworkDatagram datagram = udpSocket_->receiveDatagram();
+      if (!datagram.isValid()) {
+        tylog("recv not valid");
+        assert(!"recv invalid");
+      }
 
-      tylog("================== recv from %s:%d, size=%d ==================",
-            addr.toString().toStdString().data(), port, realLen);
+      QByteArray rawData = datagram.data();  // shallow copy
 
-      static PeerConnection pc(addr.toString().toStdString(), (int)port);
+      tylog(
+          "================== recv %s:%d->%s:%d, TTL=%d, size=%d "
+          "==================",
+          datagram.senderAddress().toString().toStdString().data(),
+          datagram.senderPort(),
+          datagram.destinationAddress().toString().toStdString().data(),
+          datagram.destinationPort(), datagram.hopLimit(), rawData.size());
 
-      pc.HandlePacket(std::vector<char>(arr.begin(), arr.begin() + realLen));
+      static PeerConnection pc(
+          datagram.senderAddress().toString().toStdString(),
+          datagram.senderPort());
+
+      pc.HandlePacket(std::vector<char>(rawData.begin(), rawData.end()));
     }
     tylog("exit while reading");
   }
