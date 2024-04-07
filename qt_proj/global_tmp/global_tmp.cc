@@ -44,8 +44,7 @@ std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(
 }
 
 // get rtmp play fd, O(n).
-std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(
-    int targetFd) const {
+std::shared_ptr<PeerConnection> PCManager::GetPeerConnection(int) const {
   /*
   for (const std::pair<ClientSrcId, std::shared_ptr<PeerConnection>> &p :
        client2PC_) {
@@ -74,7 +73,7 @@ void PCManager::CleanTimeoutPeerConnection() {
 }
 
 // 收到 rtp/rtcp 时dump，注意下行也会收到rtcp
-void DumpRecvPacket(const std::vector<char> &packet) {
+void DumpRecvPacket(const std::vector<char> &) {
   /*
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
@@ -88,7 +87,7 @@ void DumpRecvPacket(const std::vector<char> &packet) {
 }
 
 // 发包前dump未加密的包，包括发给源client和下游peer
-void DumpSendPacket(const std::vector<char> &packet) {
+void DumpSendPacket(const std::vector<char> &) {
   /*
   sockaddr_in addr = tylib::ConstructSockAddr("127.0.0.1", 12347);
   ssize_t sendtoLen =
@@ -129,8 +128,8 @@ static const char *my_get_level_str(int level) {
 }
 
 // from rtmp lib static var
-static const char *levels[] = {"CRIT", "ERROR", "WARNING",
-                               "INFO", "DEBUG", "DEBUG2"};
+// static const char *levels[] = {"CRIT", "ERROR", "WARNING",
+// "INFO", "DEBUG", "DEBUG2"};
 
 class SrsFFmpegLogHelper {
  public:
@@ -150,21 +149,21 @@ class SrsFFmpegLogHelper {
   }
 
   // from librtmp/log.c rtmp_log_default()
-  static void rtmpLog(int level, const char *format, va_list vl) {
-    /*
-    if (level > RTMP_debuglevel) {
-      return;
-    }
+  // static void rtmpLog(int level, const char *format, va_list vl) {
+  /*
+  if (level > RTMP_debuglevel) {
+    return;
+  }
 
 #define MAX_PRINT_LEN 2048
-    char str[MAX_PRINT_LEN] = "";
+  char str[MAX_PRINT_LEN] = "";
 
-    vsnprintf(str, MAX_PRINT_LEN - 1, format, vl);
+  vsnprintf(str, MAX_PRINT_LEN - 1, format, vl);
 
-    // should check level value
-    tylog("%s %s", levels[level], str);
-    */
-  }
+  // should check level value
+  tylog("%s %s", levels[level], str);
+  */
+  // }
 
   // @brief FFmpeg log callback function
   // reference: void format_line(void *avcl, int level, const char *fmt, va_list

@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # TARGET = rtspPlayer
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++20
+QMAKE_CXXFLAGS += -std=c++20 -Werror -Wextra -Wall -Wno-error=deprecated-declarations
 
 SOURCES += \
     *.cpp \

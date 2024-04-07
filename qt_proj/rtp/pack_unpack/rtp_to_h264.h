@@ -32,7 +32,7 @@ class MediaData {
 
   std::string ToString() const {
     return tylib::format_string(
-        "{payloadType=%u, rtpTs=%u, rtmp ts=%lu, compositionTs=%d, "
+        "{payloadType=%u, rtpTs=%u, rtmp ts=%llu, compositionTs=%d, "
         "videoRotation=%d}",
         payload_type_, rtp_timestamp_, timestamp_, composition_timestamp_,
         rotate_angle_);

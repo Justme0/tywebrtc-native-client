@@ -129,27 +129,27 @@ RtpHandler::~RtpHandler() {
   }
 }
 
-static int WriteFile(const std::vector<char> &data) {
-  static FILE *pfOutfpAAC = nullptr;
-  if (nullptr == pfOutfpAAC) {
-    pfOutfpAAC = fopen("audio.aac", "wb");
-    if (nullptr == pfOutfpAAC) {
-      tylog("open aac file fail, errno=%d[%s]", errno, strerror(errno));
-      // should not use assert
-      assert(!"shit open aac file");
-
-      return -1;
-    }
-  }
-
-  size_t n = fwrite(data.data(), data.size(), 1, pfOutfpAAC);
-  if (n < 1) {
-    tylog("fwrite fail, return value=%zu.", n);
-    return -2;
-  }
-
-  return 0;
-}
+// static int WriteFile(const std::vector<char> &data) {
+//   static FILE *pfOutfpAAC = nullptr;
+//   if (nullptr == pfOutfpAAC) {
+//     pfOutfpAAC = fopen("audio.aac", "wb");
+//     if (nullptr == pfOutfpAAC) {
+//       tylog("open aac file fail, errno=%d[%s]", errno, strerror(errno));
+//       // should not use assert
+//       assert(!"shit open aac file");
+//
+//       return -1;
+//     }
+//   }
+//
+//   size_t n = fwrite(data.data(), data.size(), 1, pfOutfpAAC);
+//   if (n < 1) {
+//     tylog("fwrite fail, return value=%zu.", n);
+//     return -2;
+//   }
+//
+//   return 0;
+// }
 
 extern int g_sock_fd;
 
@@ -197,7 +197,7 @@ int RtpHandler::WriteWebmFile(const std::string &frame, uint32_t rtpTs,
   avPacket.pts = pts;
   avPacket.dts = pts;
 
-  tylog("stmIdx=%d, rtpPTS=%d, timebase %d / %d, now_ms=%s, pts=%ld.",
+  tylog("stmIdx=%d, rtpPTS=%d, timebase %d / %d, now_ms=%s, pts=%lld.",
         streamIndex, rtpPTS,
         uplinkFileCtx_->streams[streamIndex]->time_base.num,
         uplinkFileCtx_->streams[streamIndex]->time_base.den,
@@ -342,7 +342,6 @@ int RtpHandler::DumpPacket(const std::vector<char> &packet,
       return ret;
     }
 
-    /*
     SrsAudioFrame f;
     // OPT: avoid copy
     f.s.assign(payloadBegin, payloadEnd);
@@ -418,12 +417,12 @@ SSRCInfo::SSRCInfo(RtpHandler &belongingRtpHandler)
       belongingRtpHandler(belongingRtpHandler) {}
 
 std::string SSRCInfo::ToString() const {
-  return tylib::format_string("{biggestSeq=%u, biggestCycle=%ld}", biggestSeq,
+  return tylib::format_string("{biggestSeq=%u, biggestCycle=%lld}", biggestSeq,
                               biggestCycle);
 }
 
 // to rename, now called in only one position
-int RtpHandler::SendToPeer_(RtpBizPacket &rtpBizPacket) {
+int RtpHandler::SendToPeer_(RtpBizPacket &) {
   /*
   auto peerPC = belongingPeerConnection_.FindPeerPC();
   if (nullptr == peerPC) {

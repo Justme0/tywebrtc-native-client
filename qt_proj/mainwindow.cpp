@@ -14,7 +14,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 }
 
-#pragma execution_character_set("utf-8")
+// #pragma execution_character_set("utf-8")
 
 using namespace std;
 
@@ -48,7 +48,7 @@ void MainWindow::slotGetOneFrame(QImage img) {
   update();  //调用update将执行paintEvent函数
 }
 
-void MainWindow::paintEvent(QPaintEvent *event) {
+void MainWindow::paintEvent(QPaintEvent *) {
   QPainter painter(this);
   int showWidth = this->width() - 100;
   int showHeight = this->height() - 50;

@@ -194,7 +194,7 @@ void RtpDepacketizerVp8::Init() {
 
 int RtpDepacketizerVp8::VideoUnPackVp8RtpStm(const char* pData, int Length,
                                              AVFrame** o_yuvFrame) {
-  int ret = 0;
+  // int ret = 0;
 
   if (!pData || Length == 0) {
     tylog("data null");

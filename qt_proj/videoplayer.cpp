@@ -64,13 +64,11 @@ class UdpServer : public QThread {
 
       QByteArray rawData = datagram.data();  // shallow copy
 
-      tylog(
-          "================== recv %s:%d->%s:%d, TTL=%d, size=%d "
-          "==================",
-          datagram.senderAddress().toString().toStdString().data(),
-          datagram.senderPort(),
-          datagram.destinationAddress().toString().toStdString().data(),
-          datagram.destinationPort(), datagram.hopLimit(), rawData.size());
+      tylog("==== recv %s:%d->%s:%d, TTL=%d, size=%lld ====",
+            datagram.senderAddress().toString().toStdString().data(),
+            datagram.senderPort(),
+            datagram.destinationAddress().toString().toStdString().data(),
+            datagram.destinationPort(), datagram.hopLimit(), rawData.size());
 
       static PeerConnection pc(
           datagram.senderAddress().toString().toStdString(),
@@ -85,7 +83,7 @@ class UdpServer : public QThread {
     // Send it out to some IP (192.168.1.1) and port (45354).
     qint64 bytesSent = udpSocket_->writeDatagram(
         QByteArray("Hello Qt!"), QHostAddress("36.155.205.204"), 8090);
-    tylog("send size is %ld", bytesSent);
+    tylog("send size is %lld", bytesSent);
   }
 
  private:

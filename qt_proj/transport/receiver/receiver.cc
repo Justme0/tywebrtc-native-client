@@ -102,6 +102,7 @@ const std::string kNotCompleteCannotRecover = "NotCompleteCannotRecover";
 std::vector<RtpBizPacket> RtpReceiver::TryRecoverFEC(
     std::map<PowerSeqT, RtpBizPacket>& group) {
   assert(!group.empty());
+  const uint32_t ts = group.begin()->second.GetRtpHeaderRef().getTimestamp();
 
   int recvFecNum{};
   int recvDataNum{};
@@ -113,13 +114,14 @@ std::vector<RtpBizPacket> RtpReceiver::TryRecoverFEC(
   // this->lastPoppedPowerSeq_ + 1;
   for (auto it = group.begin(); it != group.end(); ++it) {
     tylog("powerSeq=%lld, pkt=%s.", it->first, it->second.ToString().data());
+    assert(it->second.GetRtpHeaderRef().getTimestamp() == ts);
 
     const RtpHeader& rtp =
         *reinterpret_cast<const RtpHeader*>(it->second.rtpRawPacket.data());
     if (rtp.isFEC()) {
       const FecHeader& fecHeader =
           *reinterpret_cast<const FecHeader*>(rtp.getHeaderExt());
-      tylog("it's %dth FEC: powerSeq=%d, fec=%s.", recvFecNum, it->first,
+      tylog("it's %dth FEC: powerSeq=%lld, fec=%s.", recvFecNum, it->first,
             fecHeader.ToString().data());
 
       ++recvFecNum;
@@ -135,126 +137,130 @@ std::vector<RtpBizPacket> RtpReceiver::TryRecoverFEC(
   tylog("recvDataNum=%d, recvFecNum=%d.", recvDataNum, recvFecNum);
 
   if (recvFecNum == 0) {
-    // bug: if first data pkt is lost, should check in outer function
+    // OPT: what if the first data pkt is lost
     assert(!"not recv fec, todo");
     return {};
-  } else {
-    assert(firstFecIt != group.end());
+  }
 
-    const FecHeader& firstFecHeader = *reinterpret_cast<const FecHeader*>(
-        firstFecIt->second.rtpRawPacket.data() + kRtpHeaderLenByte);
-    int expectDataNum = firstFecHeader.getProtectedDataNum();
-    int expectFecNum = firstFecHeader.fecNum();
+  assert(firstFecIt != group.end());
 
-    tylog("recvDataNum=%d, expectDataNum=%d, recvAll=%zu.", recvDataNum,
-          expectDataNum, group.size());
-    assert(recvDataNum <= expectDataNum);
+  const FecHeader& firstFecHeader = *reinterpret_cast<const FecHeader*>(
+      firstFecIt->second.rtpRawPacket.data() + kRtpHeaderLenByte);
+  int expectDataNum = firstFecHeader.getProtectedDataNum();
+  int expectFecNum = firstFecHeader.fecNum();
 
-    if (recvDataNum == expectDataNum && recvFecNum == expectFecNum) {
-      tylog("result=%s.", kAllComplete.data());
+  tylog("recvDataNum=%d, expectDataNum=%d, recvAll=%zu.", recvDataNum,
+        expectDataNum, group.size());
+  assert(recvDataNum <= expectDataNum);
 
-      // only for test!!!
-      rsfec::CRSFec fec;
-      fec.SetVandermondeMatrix();
-      const int N = expectDataNum;
-      int ret = fec.SetNM(N, firstFecHeader.fecNum());
-      if (ret) {
-        tylog("fec set NM ret=%d.", ret);
+  if (recvDataNum == expectDataNum && recvFecNum == expectFecNum) {
+    tylog("result=%s.", kAllComplete.data());
 
-        return {};
-      }
+    // only for test!!!
+    rsfec::CRSFec fec;
+    fec.SetVandermondeMatrix();
+    const int N = expectDataNum;
+    int ret = fec.SetNM(N, firstFecHeader.fecNum());
+    if (ret) {
+      tylog("fec set NM ret=%d.", ret);
 
-      // arg 1
-      auto dataLenList = firstFecHeader.computeProtectedDataLenList();
-      const int pkgSize =
-          *std::max_element(dataLenList.begin(), dataLenList.end());
-      tylog("fec pkgSize=%d.", pkgSize);
-
-      // arg 2
-      std::vector<int> inputIds(N - 1);
-      std::iota(inputIds.begin(), inputIds.end(), 1);
-      tylog("input ids=%s.", tylib::AnyToString(inputIds).data());
-
-      // arg 3
-      std::vector<int> outputIds = {0};
-
-      // arg 4
-      std::vector<void*> bufferIn(N);
-      std::vector<char> oneData(pkgSize);
-      std::vector<std::vector<char>> supplement(N);
-      bufferIn[0] = oneData.data();
-
-      auto it = ++group.begin();
-      for (int i = 1; i < N; ++i, ++it) {
-        if (it->second.rtpRawPacket.size() == pkgSize) {
-          bufferIn[i] = it->second.rtpRawPacket.data();
-        } else {
-          assert(static_cast<int>(it->second.rtpRawPacket.size()) < pkgSize);
-
-          supplement[i] = it->second.rtpRawPacket;
-          supplement[i].resize(pkgSize);
-          bufferIn[i] = supplement[i].data();
-        }
-      }
-      assert(it == firstFecIt);
-
-      // arg 5
-      std::vector<void*> bufferOut = {
-          const_cast<char*>(firstFecHeader.getFecPayloadBegin())};
-      assert(bufferOut.size() == 1);
-
-      ret = fec.RecoveryFEC(pkgSize, inputIds, outputIds, bufferIn, bufferOut);
-      if (ret) {
-        tylog("recover fec ret=%d.", ret);
-        return {};
-      }
-
-      assert(dataLenList.front() <= pkgSize);
-      oneData.resize(dataLenList.front());
-
-      assert(oneData.size() == group.begin()->second.rtpRawPacket.size());
-      assert(oneData == group.begin()->second.rtpRawPacket);
-
-      std::vector<RtpBizPacket> v;
-      v.push_back({std::move(oneData), group.begin()->second.cycle});
-      tylog("recover a data=%s.", tylib::AnyToString(v).data());
-      for (auto it = ++group.begin(); it != firstFecIt; ++it) {
-        v.push_back(std::move(it->second));
-      }
-      assert(static_cast<int>(v.size()) == expectDataNum);
-      return v;
-    } else if (expectDataNum <= group.size()) {
-      tylog("result=%s.", kNotCompleteCanRecover.data());
-
-      rsfec::CRSFec fec;
-      fec.SetVandermondeMatrix();
-      const int N = expectDataNum;
-      int ret = fec.SetNM(N, firstFecHeader.fecNum());
-      if (ret) {
-        tylog("fec set NM ret=%d.", ret);
-        assert(!"set NM should not fail :)");
-
-        return {};
-      }
-
-      // arg 1
-      auto dataLenList = firstFecHeader.computeProtectedDataLenList();
-      const int pkgSize =
-          *std::max_element(dataLenList.begin(), dataLenList.end());
-      tylog("fec pkgSize=%d.", pkgSize);
-
-      // arg 2
-
-      return {};  // TODO
-    } else {
-      tylog("result=%s.", kNotCompleteCannotRecover.data());
-      assert(!"todo");
       return {};
     }
+
+    // arg 1
+    auto dataLenList = firstFecHeader.computeProtectedDataLenList();
+    const int pkgSize =
+        *std::max_element(dataLenList.begin(), dataLenList.end());
+    tylog("fec pkgSize=%d.", pkgSize);
+
+    // arg 2
+    std::vector<int> inputIds(N - 1);
+    std::iota(inputIds.begin(), inputIds.end(), 1);
+    tylog("input ids=%s.", tylib::AnyToString(inputIds).data());
+
+    // arg 3
+    std::vector<int> outputIds = {0};
+
+    // arg 4
+    std::vector<void*> bufferIn(N);
+    std::vector<char> oneData(pkgSize);
+    std::vector<std::vector<char>> supplement(N);
+    bufferIn[0] = oneData.data();
+
+    auto it = ++group.begin();
+    for (int i = 1; i < N; ++i, ++it) {
+      if (static_cast<int>(it->second.rtpRawPacket.size()) == pkgSize) {
+        bufferIn[i] = it->second.rtpRawPacket.data();
+      } else {
+        assert(static_cast<int>(it->second.rtpRawPacket.size()) < pkgSize);
+
+        supplement[i] = it->second.rtpRawPacket;
+        supplement[i].resize(pkgSize);
+        bufferIn[i] = supplement[i].data();
+      }
+    }
+    assert(it == firstFecIt);
+
+    // arg 5
+    std::vector<void*> bufferOut = {
+        const_cast<char*>(firstFecHeader.getFecPayloadBegin())};
+    assert(bufferOut.size() == 1);
+
+    ret = fec.RecoveryFEC(pkgSize, inputIds, outputIds, bufferIn, bufferOut);
+    if (ret) {
+      tylog("recover fec ret=%d.", ret);
+      return {};
+    }
+
+    assert(dataLenList.front() <= pkgSize);
+    oneData.resize(dataLenList.front());
+
+    assert(oneData.size() == group.begin()->second.rtpRawPacket.size());
+    assert(oneData == group.begin()->second.rtpRawPacket);
+
+    std::vector<RtpBizPacket> v;
+    v.push_back({std::move(oneData), group.begin()->second.cycle});
+    tylog("recover a data=%s.", tylib::AnyToString(v).data());
+    for (auto it = ++group.begin(); it != firstFecIt; ++it) {
+      v.push_back(std::move(it->second));
+    }
+    assert(static_cast<int>(v.size()) == expectDataNum);
+
+    return v;
+  } else if (expectDataNum <= static_cast<int>(group.size())) {
+    tylog("result=%s.", kNotCompleteCanRecover.data());
+
+    rsfec::CRSFec fec;
+    fec.SetVandermondeMatrix();
+    const int N = expectDataNum;
+    int ret = fec.SetNM(N, firstFecHeader.fecNum());
+    if (ret) {
+      tylog("fec set NM ret=%d.", ret);
+      assert(!"set NM should not fail :)");
+
+      return {};
+    }
+
+    // arg 1
+    auto dataLenList = firstFecHeader.computeProtectedDataLenList();
+    const int pkgSize =
+        *std::max_element(dataLenList.begin(), dataLenList.end());
+    tylog("fec pkgSize=%d.", pkgSize);
+
+    // arg 2
+
+    // TODO
+    return {};
+  } else {
+    tylog("result=%s.", kNotCompleteCannotRecover.data());
+
+    // TODO
+    return {};
   }
 }
 
 std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
+  tylog("receiver=%s.", ToString().data());
   rtpBizPacket.enterJitterTimeMs = g_now_ms;
 
   const RtpHeader& rtp = rtpBizPacket.GetRtpHeaderRef();
@@ -284,11 +290,11 @@ std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
     lastPoppedPowerSeq_ = rtp.getSeqNumber();
     lastPoppedTs_ = rtp.getTimestamp();
 
-    tylog("now receiver=%s.", ToString().data());
+    tylog("receiver=%s.", ToString().data());
 
-    // check tS
-    // NOTE: ORIGINAL RTP HAS BEEN MOVED, WHILE ADDRESS IS SAME. The usage is
-    // dangerous.
+    // NOTE: ORIGINAL RTP HAS BEEN MOVED, WHILE ADDRESS IS SAME.
+    // The usage is dangerous.
+    // do check.
     auto ts = rtp.getTimestamp();
     for (const auto& [_, pkt] : recvGroup) {
       if (pkt.GetRtpHeaderRef().getTimestamp() != ts) {
@@ -299,8 +305,15 @@ std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
 
     return TryRecoverFEC(recvGroup);
   } else {
-    jitterBuffer_.emplace(rtpBizPacket.GetPowerSeq(), std::move(rtpBizPacket));
-    assert(rtpBizPacket.rtpRawPacket.empty());
+    auto realInsert = jitterBuffer_.emplace(rtpBizPacket.GetPowerSeq(),
+                                            std::move(rtpBizPacket));
+    if (!realInsert.second) {
+      // audio sometimes recv two repeated pkt. TODO: troublesome
+      tylog("warn: recv same seq of pkt=%s.", rtpBizPacket.ToString().data());
+      assert(!rtpBizPacket.rtpRawPacket.empty());
+    } else {
+      assert(rtpBizPacket.rtpRawPacket.empty());
+    }
 
     const RtpBizPacket& firstRtp = jitterBuffer_.begin()->second;
     tylog("jitter firstRtp=%s.", firstRtp.ToString().data());
@@ -312,6 +325,10 @@ std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
       return {};
     }
 
+    // RTP timestamp never rollback?
+    assert(rtp.getTimestamp() > firstTs);
+    assert(firstRtp.WaitTimeMs() >= kUnorderWaitMs);
+
     std::map<PowerSeqT, RtpBizPacket> recvGroup;
     for (auto it = jitterBuffer_.begin();
          it->second.GetRtpHeaderRef().getTimestamp() == firstTs;) {
@@ -319,10 +336,21 @@ std::vector<RtpBizPacket> RtpReceiver::PushAndPop(RtpBizPacket&& rtpBizPacket) {
       lastPoppedTs_ = it->second.GetRtpHeaderRef().getTimestamp();
 
       recvGroup.emplace(it->first, std::move(it->second));
+      assert(it->second.rtpRawPacket.empty());
       it = jitterBuffer_.erase(it);
       assert(it != jitterBuffer_.end());
     }
 
+    // do check
+    auto ts = rtp.getTimestamp();
+    for (const auto& [_, pkt] : recvGroup) {
+      if (pkt.GetRtpHeaderRef().getTimestamp() != ts) {
+        tylog("pkt ts is not %u: pkt=%s.", ts, pkt.ToString().data());
+        assert(!"ts is not same");
+      }
+    }
+
+    tylog("receiver=%s.", ToString().data());
     return TryRecoverFEC(recvGroup);
   }
 }
@@ -400,7 +428,6 @@ std::vector<RtpBizPacket> RtpReceiver::PopOrderedPackets() {
     return {};
   }
 
-  /*
   if (kNackTimeMs <= waitMs && waitMs < kPLITimeMs &&
       jitterBuffer_.size() <= kJitterMaxSize) {
     tylog("wait %ldms, to nack", waitMs);

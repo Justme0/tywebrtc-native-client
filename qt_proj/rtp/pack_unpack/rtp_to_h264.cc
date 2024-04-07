@@ -362,7 +362,7 @@ int H264Unpacketizer::Unpacketize(const std::vector<char> &vBufReceive,
                                   std::vector<MediaData> *o_mediaList) {
   int ret = 0;
 
-  uint32_t lost_pkt_cnt = 0;
+  // uint32_t lost_pkt_cnt = 0;
   const RtpHeader &rtpHeader =
       *reinterpret_cast<const RtpHeader *>(vBufReceive.data());
 

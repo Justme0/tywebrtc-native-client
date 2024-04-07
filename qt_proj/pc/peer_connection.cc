@@ -29,7 +29,7 @@ PeerConnection::~PeerConnection() {
 }
 
 // vBufSend is encrypted data if RTP
-int PeerConnection::SendToClient(const std::vector<char> &vBufSend) const {
+int PeerConnection::SendToClient(const std::vector<char> &) const {
   /*
   int r = rand() % 100;
   if (r < kDownlossRateMul100) {
